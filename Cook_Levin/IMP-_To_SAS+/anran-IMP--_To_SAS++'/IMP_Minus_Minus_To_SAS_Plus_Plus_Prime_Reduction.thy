@@ -279,6 +279,22 @@ definition imp_minus_minus_to_sas_plus ::
       goal_of = imp_minus_state_to_sas_plus (SKIP, goal_vs),
       range_of = (map_of (map (\<lambda> v. (VN v, set domain)) (enumerate_variables c)))(PC \<mapsto> pc_d) \<rparr>)"
 
+(* Added this. HERE! *)
+(* This function maps an IMP- program to a set of SAS++' problems with all possible initial and final states. *)
+(* Thoughts: to a set of problem or list? *)
+definition imp_minus_minus_to_sas_plus_prime :: 
+"com \<Rightarrow> problem set" where
+" imp_minus_minus_to_sas_plus_prime c = (let cs = enumerate_subprograms c ; 
+  all_imp_states = {m. (\<exists>a\<in>set(enumerate_variables c).\<exists>b\<in>{Some Zero, Some One, None}. m a = b)}; 
+  pc_d = set (map (\<lambda> i. PCV i) cs) in
+  {p. \<exists>initial_vs\<in>all_imp_states. \<exists>goal_vs\<in>all_imp_states. p=\<lparr>
+    variables_of = PC # (map VN (enumerate_variables c)),
+    operators_of = coms_to_operators cs, 
+    initial_of = imp_minus_state_to_sas_plus (c, initial_vs) , 
+    goal_of = imp_minus_state_to_sas_plus (SKIP, goal_vs), 
+    range_of = (map_of (map (\<lambda> v. (VN v, set domain)) (enumerate_variables c)))(PC \<mapsto> pc_d)
+  \<rparr>} )"
+
 (* Fitted this. HERE! *)
 lemma range_defined: 
   assumes "v \<in> set (variables_of (imp_minus_minus_to_sas_plus c I G))" 
