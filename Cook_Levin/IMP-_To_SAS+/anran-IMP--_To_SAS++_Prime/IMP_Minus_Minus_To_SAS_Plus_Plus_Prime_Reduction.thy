@@ -285,7 +285,6 @@ definition imp_minus_minus_to_sas_plus ::
 definition imp_minus_minus_to_sas_plus_prime :: 
 "com \<Rightarrow> problem" where
 " imp_minus_minus_to_sas_plus_prime c = (let cs = enumerate_subprograms c ; 
-  all_imp_states = {m. (\<exists>a\<in>set(enumerate_variables c).\<exists>b\<in>{Some Zero, Some One, None}. m a = b)}; 
   pc_d = set (map (\<lambda> i. PCV i) cs) in
   \<lparr>
     variables_of = PC # (map VN (enumerate_variables c)),
