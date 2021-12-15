@@ -486,7 +486,46 @@ proof -
   ultimately show ?thesis using I'_def t_def by auto
 qed
 
-text \<open> Now we reason about the reduction without restriction of initial and final states. \<close>
+text \<open> Now we reason about the reduction to SAS++'. \<close>
+(* Added this. HERE! *)
+lemma imp_minus_minus_to_sas_plus_plus_prime_aux:
+   "(c1, is1) \<rightarrow>\<^bsup>t\<^esup> (c2, is2)
+  \<Longrightarrow> c1 \<in> set (enumerate_subprograms c)
+  \<Longrightarrow> dom is1 = set (enumerate_variables c)
+  \<Longrightarrow> (\<exists>ops. set ops \<subseteq> set ((imp_minus_minus_to_sas_plus_prime c)\<^sub>\<O>\<^sub>+)
+     \<and> length ops = t
+     \<and> (execute_serial_plan_sas_plus (imp_minus_state_to_sas_plus (c1, is1)) ops)
+        = imp_minus_state_to_sas_plus (c2, is2))"
+proof (induction t arbitrary: c1 is1)
+  case (Suc t)
+  obtain c1' is1' where c1'_def: "(c1, is1) \<rightarrow> (c1', is1')
+    \<and> (c1', is1') \<rightarrow>\<^bsup>t\<^esup> (c2, is2)" using Suc by auto
+  then obtain op where op_def: "op \<in> set (com_to_operators c1)
+    \<and> execute_operator_sas_plus (imp_minus_state_to_sas_plus (c1, is1)) op 
+        =  imp_minus_state_to_sas_plus (c1', is1')
+    \<and> is_operator_applicable_in (imp_minus_state_to_sas_plus (c1, is1)) op" 
+    using imp_minus_minus_to_sas_plus_plus_single_step Suc by metis
+  then have "dom is1' = set (enumerate_variables c)" 
+    using c1'_def Suc step_doesnt_add_variables
+     apply (auto simp: domIff)
+    by (metis domD domIff option.simps(3) step_doesnt_add_variables)+
+  moreover have "c1' \<in> set (enumerate_subprograms c)" using c1'_def enumerate_subprograms_transitive 
+    enumerate_subprograms_complete_step
+    using Suc.prems by blast+
+  ultimately obtain ops where ops_def: "set ops \<subseteq> set ((imp_minus_minus_to_sas_plus_prime c)\<^sub>\<O>\<^sub>+)
+     \<and> length ops = t
+     \<and> (execute_serial_plan_sas_plus (imp_minus_state_to_sas_plus (c1', is1')) ops)
+        = imp_minus_state_to_sas_plus (c2, is2)"
+    using Suc c1'_def Suc_lessD by blast
+  let ?ops' = "op # ops"
+  have "set ?ops' \<subseteq> set ((imp_minus_minus_to_sas_plus_prime c)\<^sub>\<O>\<^sub>+)
+     \<and> length ?ops' = Suc t
+     \<and> (execute_serial_plan_sas_plus (imp_minus_state_to_sas_plus (c1, is1)) ?ops')
+        = imp_minus_state_to_sas_plus (c2, is2)"
+    using Suc c1'_def op_def ops_def
+    by (auto simp: imp_minus_minus_to_sas_plus_prime_def Let_def coms_to_operators_def)
+  then show ?case by blast
+qed auto
 
 (* Added this. HERE! *)
 lemma imp_minus_minus_to_sas_plus_plus_prime:
@@ -498,4 +537,25 @@ lemma imp_minus_minus_to_sas_plus_plus_prime:
   shows "(\<exists>plan.
      is_serial_solution_for_problem_sas_plus_plus_prime I G (imp_minus_minus_to_sas_plus_prime c) plan
      \<and> length plan \<le> t')"
-  sorry 
+proof -
+  let ?\<Psi> = "imp_minus_minus_to_sas_plus_prime c"
+  obtain plan where plan_def: "set plan \<subseteq> set ((?\<Psi>)\<^sub>\<O>\<^sub>+)
+     \<and> length plan = t
+     \<and> (execute_serial_plan_sas_plus I plan)
+        = imp_minus_state_to_sas_plus (SKIP, is2)"
+    using imp_minus_minus_to_sas_plus_plus_prime_aux[OF assms(1)] assms c_in_all_subprograms_c 
+    by blast
+  moreover then have "(?\<Psi>)\<^sub>G\<^sub>+ \<subseteq>\<^sub>m execute_serial_plan_sas_plus I plan"
+    and "dom I = set (((?\<Psi>))\<^sub>\<V>\<^sub>+)"
+    and "(\<forall> v \<in> set ((?\<Psi>)\<^sub>\<V>\<^sub>+). the (I v) \<in> range_of' ?\<Psi> v)"
+    and "((?\<Psi>)\<^sub>I\<^sub>+) \<subseteq>\<^sub>m I"
+    using assms plan_def c_in_all_subprograms_c
+    apply(auto simp: imp_minus_minus_to_sas_plus_prime_def Let_def 
+        range_of'_def imp_minus_state_to_sas_plus_def map_comp_def map_le_def)
+    by (auto split: option.splits variable.splits)
+  ultimately have "is_serial_solution_for_problem_sas_plus_plus_prime I G ?\<Psi> plan" 
+    using assms is_serial_solution_for_problem_sas_plus_plus_prime_def Let_def list_all_def ListMem_iff
+    by (smt (verit, ccfv_SIG) map_le_def subsetD)
+  then show ?thesis using plan_def \<open>t \<le> t'\<close>
+    by blast
+qed 
