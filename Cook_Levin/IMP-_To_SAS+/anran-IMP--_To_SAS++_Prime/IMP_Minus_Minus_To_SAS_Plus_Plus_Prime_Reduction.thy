@@ -274,7 +274,7 @@ definition imp_minus_minus_to_sas_plus ::
   goal_vs = G|`(set (enumerate_variables c)) ;
   pc_d = set (map (\<lambda> i. PCV i) cs) in
     \<lparr> variables_of = PC # (map VN (enumerate_variables c)),
-      operators_of = coms_to_operators cs, 
+      operators_of = set (coms_to_operators cs), 
       initial_of = imp_minus_state_to_sas_plus (c, initial_vs),
       goal_of = imp_minus_state_to_sas_plus (SKIP, goal_vs),
       range_of = (map_of (map (\<lambda> v. (VN v, set domain)) (enumerate_variables c)))(PC \<mapsto> pc_d) \<rparr>)"
@@ -288,7 +288,7 @@ definition imp_minus_minus_to_sas_plus_prime ::
   pc_d = set (map (\<lambda> i. PCV i) cs) in
   \<lparr>
     variables_of = PC # (map VN (enumerate_variables c)),
-    operators_of = coms_to_operators cs, 
+    operators_of = set (coms_to_operators cs), 
     initial_of = imp_minus_state_to_sas_plus (c, (\<lambda>x. None)) , 
     goal_of = imp_minus_state_to_sas_plus (SKIP, (\<lambda>x. None)), 
     range_of = (map_of (map (\<lambda> v. (VN v, set domain)) (enumerate_variables c)))(PC \<mapsto> pc_d)
@@ -392,7 +392,7 @@ proof -
       and ?I = "initial_of ?\<Psi>"
       and ?G = "goal_of ?\<Psi>"
       and ?D = "range_of ?\<Psi>"
-  have "\<forall>x \<in> set ?ops. is_valid_operator_sas_plus ?\<Psi> x" 
+  have "\<forall>x \<in> ?ops. is_valid_operator_sas_plus ?\<Psi> x" 
     and "\<forall>v \<in> set ?vs. (the (?D v)) \<noteq> {}"
     using operators_valid c_in_all_subprograms_c[where ?c = c] 
     by (auto simp: imp_minus_minus_to_sas_plus_def Let_def coms_to_operators_def)

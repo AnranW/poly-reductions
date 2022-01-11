@@ -154,7 +154,7 @@ lemma applicable_in_imp_minus_then[simp]:
   \<longleftrightarrow> (x = PCV c1 \<and> map_option EV (is v) = Some y)"
   by (auto simp: map_le_def imp_minus_state_to_sas_plus_def option.case_eq_if map_comp_def)
 
-lemma [simp]: "op \<in> set ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+) 
+lemma [simp]: "op \<in> ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+) 
   \<Longrightarrow> is_operator_applicable_in s op 
   \<Longrightarrow> op \<in> set (com_to_operators (fst (sas_plus_state_to_imp_minus s)))"
   apply(auto simp: imp_minus_minus_to_sas_plus_def Let_def coms_to_operators_def 
@@ -261,7 +261,7 @@ qed(auto simp: Let_def map_leq_imp_minus_state_to_sas_plus_iff)
 text \<open> Next, we show that a plan in SAS++ corresponds to executing several steps in IMP-- \<close>
 
 lemma sas_plus_plus_to_imp_minus_minus_aux:
-  "set ops \<subseteq> set ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+) 
+  "set ops \<subseteq> ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+) 
   \<Longrightarrow> sane_sas_plus_state ss1
   \<Longrightarrow> execute_serial_plan_sas_plus ss1 ops = ss2
   \<Longrightarrow> (\<exists>t'. t' \<le> length ops 
@@ -364,7 +364,7 @@ lemma imp_minus_minus_to_sas_plus_plus_aux:
    "(c1, is1) \<rightarrow>\<^bsup>t\<^esup> (c2, is2)
   \<Longrightarrow> c1 \<in> set (enumerate_subprograms c)
   \<Longrightarrow> dom is1 = set (enumerate_variables c)
-  \<Longrightarrow> (\<exists>ops. set ops \<subseteq> set ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+)
+  \<Longrightarrow> (\<exists>ops. set ops \<subseteq> ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+)
      \<and> length ops = t
      \<and> (execute_serial_plan_sas_plus (imp_minus_state_to_sas_plus (c1, is1)) ops)
         = imp_minus_state_to_sas_plus (c2, is2))"
@@ -384,13 +384,13 @@ proof (induction t arbitrary: c1 is1)
   moreover have "c1' \<in> set (enumerate_subprograms c)" using c1'_def enumerate_subprograms_transitive 
     enumerate_subprograms_complete_step
     using Suc.prems by blast+
-  ultimately obtain ops where ops_def: "set ops \<subseteq> set ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+)
+  ultimately obtain ops where ops_def: "set ops \<subseteq> ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+)
      \<and> length ops = t
      \<and> (execute_serial_plan_sas_plus (imp_minus_state_to_sas_plus (c1', is1')) ops)
         = imp_minus_state_to_sas_plus (c2, is2)"
     using Suc c1'_def Suc_lessD by blast
   let ?ops' = "op # ops"
-  have "set ?ops' \<subseteq> set ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+)
+  have "set ?ops' \<subseteq> ((imp_minus_minus_to_sas_plus c I G)\<^sub>\<O>\<^sub>+)
      \<and> length ?ops' = Suc t
      \<and> (execute_serial_plan_sas_plus (imp_minus_state_to_sas_plus (c1, is1)) ?ops')
         = imp_minus_state_to_sas_plus (c2, is2)"
@@ -416,7 +416,7 @@ lemma imp_minus_minus_to_sas_plus_plus:
 proof -
   let ?\<Psi> = "imp_minus_minus_to_sas_plus c I G"
   let ?I' = "imp_minus_state_to_sas_plus (c, is1)" 
-  obtain plan where plan_def: "set plan \<subseteq> set ((?\<Psi>)\<^sub>\<O>\<^sub>+)
+  obtain plan where plan_def: "set plan \<subseteq> ((?\<Psi>)\<^sub>\<O>\<^sub>+)
      \<and> length plan = t
      \<and> (execute_serial_plan_sas_plus ?I' plan)
         = imp_minus_state_to_sas_plus (SKIP, is2)"
@@ -492,7 +492,7 @@ lemma imp_minus_minus_to_sas_plus_plus_prime_aux:
    "(c1, is1) \<rightarrow>\<^bsup>t\<^esup> (c2, is2)
   \<Longrightarrow> c1 \<in> set (enumerate_subprograms c)
   \<Longrightarrow> dom is1 = set (enumerate_variables c)
-  \<Longrightarrow> (\<exists>ops. set ops \<subseteq> set ((imp_minus_minus_to_sas_plus_prime c)\<^sub>\<O>\<^sub>+)
+  \<Longrightarrow> (\<exists>ops. set ops \<subseteq> ((imp_minus_minus_to_sas_plus_prime c)\<^sub>\<O>\<^sub>+)
      \<and> length ops = t
      \<and> (execute_serial_plan_sas_plus (imp_minus_state_to_sas_plus (c1, is1)) ops)
         = imp_minus_state_to_sas_plus (c2, is2))"
@@ -512,13 +512,13 @@ proof (induction t arbitrary: c1 is1)
   moreover have "c1' \<in> set (enumerate_subprograms c)" using c1'_def enumerate_subprograms_transitive 
     enumerate_subprograms_complete_step
     using Suc.prems by blast+
-  ultimately obtain ops where ops_def: "set ops \<subseteq> set ((imp_minus_minus_to_sas_plus_prime c)\<^sub>\<O>\<^sub>+)
+  ultimately obtain ops where ops_def: "set ops \<subseteq> ((imp_minus_minus_to_sas_plus_prime c)\<^sub>\<O>\<^sub>+)
      \<and> length ops = t
      \<and> (execute_serial_plan_sas_plus (imp_minus_state_to_sas_plus (c1', is1')) ops)
         = imp_minus_state_to_sas_plus (c2, is2)"
     using Suc c1'_def Suc_lessD by blast
   let ?ops' = "op # ops"
-  have "set ?ops' \<subseteq> set ((imp_minus_minus_to_sas_plus_prime c)\<^sub>\<O>\<^sub>+)
+  have "set ?ops' \<subseteq> ((imp_minus_minus_to_sas_plus_prime c)\<^sub>\<O>\<^sub>+)
      \<and> length ?ops' = Suc t
      \<and> (execute_serial_plan_sas_plus (imp_minus_state_to_sas_plus (c1, is1)) ?ops')
         = imp_minus_state_to_sas_plus (c2, is2)"
@@ -539,7 +539,7 @@ lemma imp_minus_minus_to_sas_plus_plus_prime:
      \<and> length plan \<le> t')"
 proof -
   let ?\<Psi> = "imp_minus_minus_to_sas_plus_prime c"
-  obtain plan where plan_def: "set plan \<subseteq> set ((?\<Psi>)\<^sub>\<O>\<^sub>+)
+  obtain plan where plan_def: "set plan \<subseteq> ((?\<Psi>)\<^sub>\<O>\<^sub>+)
      \<and> length plan = t
      \<and> (execute_serial_plan_sas_plus I plan)
         = imp_minus_state_to_sas_plus (SKIP, is2)"
