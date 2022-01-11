@@ -19,7 +19,9 @@ record  ('variable, 'domain) sas_plus_operator =
 
 record  ('variable, 'domain) sas_plus_problem =
   variables_of :: "'variable list" ("(_\<^sub>\<V>\<^sub>+)" [1000] 999)
-  operators_of :: "('variable, 'domain) sas_plus_operator list" ("(_\<^sub>\<O>\<^sub>+)" [1000] 999)
+  (* HERE: Change to set! *)
+  (* operators_of :: "('variable, 'domain) sas_plus_operator list" ("(_\<^sub>\<O>\<^sub>+)" [1000] 999) *)
+  operators_of :: "('variable, 'domain) sas_plus_operator set" ("(_\<^sub>\<O>\<^sub>+)" [1000] 999) 
   initial_of :: "('variable, 'domain) state" ("(_\<^sub>I\<^sub>+)" [1000] 999)
   goal_of :: "('variable, 'domain) state" ("(_\<^sub>G\<^sub>+)" [1000] 999)
   (* range_of :: "'variable \<rightharpoonup> 'domain list" *)
@@ -73,7 +75,7 @@ definition "is_valid_problem_sas_plus \<Psi>
       ; G = goal_of \<Psi>
       ; D = range_of \<Psi>
     in list_all (\<lambda>v. D v \<noteq> None) vs
-    \<and> list_all (is_valid_operator_sas_plus \<Psi>) ops 
+    \<and> (\<forall>op\<in>ops. (is_valid_operator_sas_plus \<Psi> op)) 
     \<and> (\<forall>v. I v \<noteq> None \<longleftrightarrow> ListMem v vs) 
     \<and> (\<forall>v. I v \<noteq> None \<longrightarrow> (the (I v)) \<in> (the (D v)))
     \<and> (\<forall>v. G v \<noteq> None \<longrightarrow> ListMem v (variables_of \<Psi>))
@@ -182,7 +184,7 @@ lemma is_valid_problem_sas_plus_then:
   fixes \<Psi>::"('v,'d) sas_plus_problem"
   assumes "is_valid_problem_sas_plus \<Psi>"
   shows "\<forall>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). (\<R>\<^sub>+ \<Psi> v) \<noteq> {}"
-    and "\<forall>op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
+    and "\<forall>op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
     and "dom ((\<Psi>)\<^sub>I\<^sub>+) = set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     and "\<forall>v \<in> dom ((\<Psi>)\<^sub>I\<^sub>+). the (((\<Psi>)\<^sub>I\<^sub>+) v) \<in> \<R>\<^sub>+ \<Psi> v"
     and "dom ((\<Psi>)\<^sub>G\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
@@ -199,7 +201,7 @@ proof -
       by (cases "?D v"; (auto simp: range_of'_def))
   } note nb = this
   have nb\<^sub>1: "\<forall>v \<in> set ?vs. ?D v \<noteq> None"
-    and "\<forall>op \<in> set ?ops. is_valid_operator_sas_plus \<Psi> op"
+    and "\<forall>op \<in> ?ops. is_valid_operator_sas_plus \<Psi> op"
     and "\<forall>v. (?I v \<noteq> None) = (v \<in> set ?vs)"
     and nb\<^sub>2: "\<forall>v. ?I v \<noteq> None \<longrightarrow> the (?I v) \<in> (the (?D v))"
     and "\<forall>v. ?G v \<noteq> None \<longrightarrow> v \<in> set ?vs"
@@ -208,7 +210,7 @@ proof -
     unfolding SAS_Plus_Prime_Representation.is_valid_problem_sas_plus_def Let_def 
       list_all_iff ListMem_iff 
     by argo+
-  then have G3: "\<forall>op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
+  then have G3: "\<forall>op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
     and G4: "dom ((\<Psi>)\<^sub>I\<^sub>+) = set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     and G5: "dom ((\<Psi>)\<^sub>G\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     unfolding variables_of_def operators_of_def
@@ -263,7 +265,7 @@ proof -
       by auto
   }
   ultimately show "\<forall>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). (\<R>\<^sub>+ \<Psi> v) \<noteq> {}"
-    and "\<forall>op \<in> set((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
+    and "\<forall>op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
     and "dom ((\<Psi>)\<^sub>I\<^sub>+) = set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     and "\<forall>v \<in> dom ((\<Psi>)\<^sub>I\<^sub>+). the (((\<Psi>)\<^sub>I\<^sub>+) v) \<in> \<R>\<^sub>+ \<Psi> v"
     and "dom ((\<Psi>)\<^sub>G\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"

@@ -32,7 +32,7 @@ definition is_serial_solution_for_problem
         ; G = sas_plus_problem.goal_of \<Psi>
         ; ops = sas_plus_problem.operators_of \<Psi>
       in G \<subseteq>\<^sub>m execute_serial_plan_sas_plus I \<psi>
-        \<and> list_all (\<lambda>op. ListMem op ops) \<psi>" 
+        \<and> list_all (\<lambda>op. op \<in> ops) \<psi>" 
 
 
 context
@@ -191,7 +191,7 @@ definition is_parallel_solution_for_problem
         ; I = sas_plus_problem.initial_of \<Psi>
         ; Ops = sas_plus_problem.operators_of \<Psi>
       in G \<subseteq>\<^sub>m execute_parallel_plan_sas_plus I \<psi>
-      \<and> list_all (\<lambda>ops. list_all (\<lambda>op. ListMem op Ops) ops) \<psi>" 
+      \<and> list_all (\<lambda>ops. list_all (\<lambda>op. op \<in> Ops) ops) \<psi>" 
 
 context 
 begin
@@ -600,7 +600,7 @@ lemma is_parallel_solution_for_problem_plan_operator_set:
   (* TODO refactor move + make visible? *)
   fixes \<Psi> :: "('v, 'd) sas_plus_problem"
   assumes "is_parallel_solution_for_problem \<Psi> \<psi>" 
-  shows "\<forall>ops \<in> set \<psi>. \<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+  shows "\<forall>ops \<in> set \<psi>. \<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
   using assms
   unfolding is_parallel_solution_for_problem_def list_all_iff ListMem_iff operators_of_def 
   by presburger
@@ -717,7 +717,7 @@ lemma execute_serial_plan_sas_plus_is_execute_parallel_plan_sas_plus_iii:
     and "op \<in> set \<psi>"
   shows "are_operator_effects_consistent op op"
 proof -
-  have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+  have "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
     using assms(2) assms(3)
     unfolding is_serial_solution_for_problem_def Let_def list_all_iff ListMem_iff 
     by fastforce
@@ -732,8 +732,8 @@ qed
 
 lemma execute_serial_plan_sas_plus_is_execute_parallel_plan_sas_plus_iv:
   fixes \<Psi> :: "('v, 'd) sas_plus_problem"
-  assumes "\<forall>op \<in> set \<psi>. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
-  shows "\<forall>ops \<in> set (embed \<psi>). \<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+  assumes "\<forall>op \<in> set \<psi>. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+  shows "\<forall>ops \<in> set (embed \<psi>). \<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
 proof -
   let ?\<psi>' = "embed \<psi>"
   have nb: "set ?\<psi>' = { [op] | op. op \<in> set \<psi> }" 
@@ -741,10 +741,10 @@ proof -
   {
     fix ops
     assume "ops \<in> set ?\<psi>'"
-    moreover obtain op where "ops = [op]" and "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    moreover obtain op where "ops = [op]" and "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
       using assms(1) nb calculation 
       by blast
-    ultimately have "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    ultimately have "\<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
       by fastforce
   }
   thus ?thesis..
@@ -770,11 +770,11 @@ proof  -
       by blast
   }
   moreover {
-    have "\<forall>op \<in> set \<psi>. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    have "\<forall>op \<in> set \<psi>. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
       using assms(2) 
       unfolding is_serial_solution_for_problem_def Let_def list_all_iff ListMem_iff
       by fastforce
-    hence "\<forall>ops \<in> set ?\<psi>'. \<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    hence "\<forall>ops \<in> set ?\<psi>'. \<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
       using execute_serial_plan_sas_plus_is_execute_parallel_plan_sas_plus_iv
       by blast
   }
@@ -786,8 +786,8 @@ qed
 
 lemma flattening_lemma_i:
   fixes \<Psi> :: "('v, 'd) sas_plus_problem"
-  assumes "\<forall>ops \<in> set \<pi>. \<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
-  shows "\<forall>op \<in> set (concat \<pi>). op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+  assumes "\<forall>ops \<in> set \<pi>. \<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+  shows "\<forall>op \<in> set (concat \<pi>). op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
 proof -
   {
     fix op
@@ -798,7 +798,7 @@ proof -
     then obtain ops where "ops \<in> set \<pi>" and "op \<in> set ops" 
       using UN_iff
       by blast
-    ultimately have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    ultimately have "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
       using assms
       by blast
   }
@@ -884,11 +884,11 @@ lemma flattening_lemma:
 proof  -
   let ?\<psi>' = "concat \<psi>" 
   {
-    have "\<forall>ops \<in> set \<psi>. \<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    have "\<forall>ops \<in> set \<psi>. \<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
       using assms(3)
       unfolding is_parallel_solution_for_problem_def list_all_iff ListMem_iff
       by force
-    hence "\<forall>op \<in> set ?\<psi>'. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    hence "\<forall>op \<in> set ?\<psi>'. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
       using flattening_lemma_i
       by blast
   }
@@ -899,7 +899,7 @@ proof  -
       moreover obtain op where "ops = [op]" 
         using assms(2) calculation
         by blast
-      moreover have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+      moreover have "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
         using assms(3) calculation
         unfolding is_parallel_solution_for_problem_def list_all_iff ListMem_iff 
         by force
@@ -993,7 +993,7 @@ lemma sublocale_sas_plus_finite_domain_representation_ii:
   fixes \<Psi>::"('v,'d) sas_plus_problem"
   assumes "is_valid_problem_sas_plus \<Psi>"
   shows "\<forall>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). (\<R>\<^sub>+ \<Psi> v) \<noteq> {}"
-    and "\<forall>op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
+    and "\<forall>op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
     and "dom ((\<Psi>)\<^sub>I\<^sub>+) = set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     and "\<forall>v \<in> dom ((\<Psi>)\<^sub>I\<^sub>+). the (((\<Psi>)\<^sub>I\<^sub>+) v) \<in> \<R>\<^sub>+ \<Psi> v"
     and "dom ((\<Psi>)\<^sub>G\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"

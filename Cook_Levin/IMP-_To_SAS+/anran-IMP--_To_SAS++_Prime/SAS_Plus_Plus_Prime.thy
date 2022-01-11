@@ -20,7 +20,7 @@ definition "is_valid_problem_sas_plus_plus \<Psi>
       ; G = goal_of \<Psi>
       ; D = range_of \<Psi>
     in list_all (\<lambda>v. D v \<noteq> None) vs
-    \<and> list_all (is_valid_operator_sas_plus \<Psi>) ops 
+    \<and> (\<forall>op\<in>ops. (is_valid_operator_sas_plus \<Psi> op))
     \<and> list_all (\<lambda> v. (the (D v)) \<noteq> {}) vs  
     \<and> (\<forall>v. I v \<noteq> None \<longrightarrow> ListMem v vs) 
     \<and> (\<forall>v. I v \<noteq> None \<longrightarrow> (the (I v)) \<in> (the (D v)))
@@ -32,7 +32,7 @@ lemma is_valid_problem_sas_plus_plus_then:
   fixes \<Psi>::"('v,'d) sas_plus_problem"
   assumes "is_valid_problem_sas_plus_plus \<Psi>"
   shows "\<forall>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). (\<R>\<^sub>+ \<Psi> v) \<noteq> {}"
-    and "\<forall>op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
+    and "\<forall>op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
     and "dom ((\<Psi>)\<^sub>I\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     and "\<forall>v \<in> dom ((\<Psi>)\<^sub>I\<^sub>+). the (((\<Psi>)\<^sub>I\<^sub>+) v) \<in> \<R>\<^sub>+ \<Psi> v"
     and "dom ((\<Psi>)\<^sub>G\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
@@ -50,7 +50,7 @@ proof -
   } note nb = this
   have nb\<^sub>1: "\<forall>v \<in> set ?vs. ?D v \<noteq> None"
     and nb\<^sub>4: "\<forall>v \<in> set ?vs. (the (?D v)) \<noteq> {}" 
-    and "\<forall>op \<in> set ?ops. is_valid_operator_sas_plus \<Psi> op"
+    and "\<forall>op \<in> ?ops. is_valid_operator_sas_plus \<Psi> op"
     and "\<forall>v. ?I v \<noteq> None \<longrightarrow> v \<in> set ?vs"
     and nb\<^sub>2: "\<forall>v. ?I v \<noteq> None \<longrightarrow> the (?I v) \<in> (the (?D v))"
     and "\<forall>v. ?G v \<noteq> None \<longrightarrow> v \<in> set ?vs"
@@ -59,7 +59,7 @@ proof -
     unfolding SAS_Plus_Plus_Prime.is_valid_problem_sas_plus_plus_def Let_def 
       list_all_iff ListMem_iff 
     by argo+
-  then have G3: "\<forall>op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
+  then have G3: "\<forall>op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
     and G4: "dom ((\<Psi>)\<^sub>I\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     and G5: "dom ((\<Psi>)\<^sub>G\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     unfolding variables_of_def operators_of_def
@@ -121,7 +121,7 @@ proof -
       by auto
   }
   ultimately show "\<forall>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). (\<R>\<^sub>+ \<Psi> v) \<noteq> {}"
-    and "\<forall>op \<in> set((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
+    and "\<forall>op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+). is_valid_operator_sas_plus \<Psi> op"
     and "dom ((\<Psi>)\<^sub>I\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     and "\<forall>v \<in> dom ((\<Psi>)\<^sub>I\<^sub>+). the (((\<Psi>)\<^sub>I\<^sub>+) v) \<in> \<R>\<^sub>+ \<Psi> v"
     and "dom ((\<Psi>)\<^sub>G\<^sub>+) \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
@@ -146,7 +146,7 @@ definition is_serial_solution_for_problem_sas_plus_plus
       in (\<exists>I'. I \<subseteq>\<^sub>m I' \<and> dom I' = set ((\<Psi>)\<^sub>\<V>\<^sub>+)
         \<and> (\<forall> v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). the (I' v) \<in> range_of' \<Psi> v)
         \<and> G \<subseteq>\<^sub>m execute_serial_plan_sas_plus I' \<psi> 
-        \<and> list_all (\<lambda>op. ListMem op ops) \<psi>)" 
+        \<and> list_all (\<lambda>op. op \<in> ops) \<psi>)" 
 
 (* Added this. HERE! *)
 (* The initial and final state is passed through in this definition. *)
@@ -157,7 +157,7 @@ definition is_serial_solution_for_problem_sas_plus_plus_prime
       in (\<exists>I'. I \<subseteq>\<^sub>m I' \<and> dom I' = set ((\<Psi>)\<^sub>\<V>\<^sub>+)
         \<and> (\<forall> v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). the (I' v) \<in> range_of' \<Psi> v)
         \<and> G \<subseteq>\<^sub>m execute_serial_plan_sas_plus I' \<psi> 
-        \<and> list_all (\<lambda>op. ListMem op ops) \<psi>)" 
+        \<and> list_all (\<lambda>op. op \<in> ops) \<psi>)" 
 
 fun chain_applicable where
 "chain_applicable s [] = True" |
@@ -198,7 +198,7 @@ lemma execute_serial_plan_sas_plus_append[simp]: "chain_applicable s as
   by auto
 
 lemma dom_of_execute_serial_plan_sas_plus: "is_valid_problem_sas_plus P
-  \<Longrightarrow> \<forall>op \<in> set ops. op \<in> set ((P)\<^sub>\<O>\<^sub>+)
+  \<Longrightarrow> \<forall>op \<in> set ops. op \<in> ((P)\<^sub>\<O>\<^sub>+)
   \<Longrightarrow> dom s = set ((P)\<^sub>\<V>\<^sub>+)
   \<Longrightarrow> dom (execute_serial_plan_sas_plus s ops) = set ((P)\<^sub>\<V>\<^sub>+)" 
 proof(induction ops arbitrary: s)
