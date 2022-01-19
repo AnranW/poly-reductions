@@ -401,15 +401,6 @@ lemma list_all_in_map_set_then:
    apply(auto)
   by (metis list.simps set_ConsD)
 
-lemma list_all_in_map_set_then_prime:
-  "\<forall>a\<in>set as. a \<in> f ` S  \<Longrightarrow> (\<exists>bs. set as = {a. (\<exists>b\<in>set bs. a =f b)} \<and> (\<forall>b \<in> set bs. b \<in> S))" 
-proof -
-  assume "\<forall>a\<in>set as. a \<in> f ` S"
-  then obtain bs where "as = map f bs" and *: "(\<forall>b \<in> set bs. b \<in> S)" using list_all_in_map_set_then by force
-  then have "set as = {a. (\<exists>b\<in>set bs. a = f b)}" using map_list_set_equivalent by auto
-  thus ?thesis using * by auto 
-qed
-
 lemma result_of_initialization_operators_on_initial_state:
   "is_valid_problem_sas_plus_plus P
     \<Longrightarrow> list_all (\<lambda>op. op \<in> (initialization_operators P)) ops
@@ -458,7 +449,7 @@ proof-
 
   have "\<exists>plan'. drop (k + 1) ?plan = map SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator plan'
     \<and> (\<forall>op \<in> set plan'. op \<in> ((P)\<^sub>\<O>\<^sub>+))"  
-    using k_def list_all_in_map_set_then_prime map_list_set_equivalent list_all_def
+    using k_def map_list_set_equivalent list_all_def list_all_in_map_set_then 
     by(auto simp: list_all_def)
   then obtain plan' where plan'_def: "map SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator plan'
     = drop (k + 1) ?plan  \<and> (\<forall>op \<in> set plan'. op \<in> ((P)\<^sub>\<O>\<^sub>+))" by fastforce
