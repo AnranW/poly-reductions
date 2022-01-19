@@ -122,6 +122,7 @@ definition initialization_operators:: "('v, 'd) sas_plus_problem \<Rightarrow> (
    \<Union> (set (map (\<lambda> v. (if v \<in> dom ((P)\<^sub>I\<^sub>+) then {} 
     else (\<lambda> y. \<lparr> precondition_of = [(Stage, Init)],  effect_of = [(Var v, DE y)]\<rparr>) `
       ( (the (range_of P v))))) ((P)\<^sub>\<V>\<^sub>+))) " 
+
 (*   concat (map (\<lambda> v. (if v \<in> dom ((P)\<^sub>I\<^sub>+) then [] 
     else map (\<lambda> y. \<lparr> precondition_of = [(Stage, Init)],  effect_of = [(Var v, DE y)]\<rparr>) 
       ( (the (range_of P v))))) ((P)\<^sub>\<V>\<^sub>+)) *)
@@ -140,8 +141,8 @@ lemma in_initialization_operators_iff:
 
 lemma Stage_after_initialization_operator[simp]:
   "op \<in> (initialization_operators P) \<Longrightarrow> (s ++ map_of (effect_of op)) Stage = s Stage"
-  (* by (smt (z3) Diff_iff initialization_operators_def map_add_def map_of_Cons_code(1) map_of_Cons_code(2) mem_Collect_eq option.case(1) sas_plus_operator.select_convs(2) variable.distinct(1)) *)
-  sorry
+  by (smt (z3) Diff_iff initialization_operators_def map_add_def map_of_Cons_code(1) map_of_Cons_code(2) mem_Collect_eq option.case(1) sas_plus_operator.select_convs(2) variable.distinct(1))
+
 (* HERE! Source: https://stackoverflow.com/questions/28633353/converting-a-set-to-a-list-in-isabelle *)
 (* definition set_to_list :: "'a set \<Rightarrow> 'a list"
   where "set_to_list s = (SOME l. set l = s)"
