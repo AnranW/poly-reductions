@@ -322,10 +322,10 @@ proof(induction plan arbitrary: s)
   then show ?case by auto
 next
   case (Cons a plan)
-  hence "a \<in> SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator ` (P)\<^sub>\<O>\<^sub>+"
-    "(s \<then>\<^sub>+ a) Stage = Some NonInit"
+  hence "a \<in> SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator ` (P)\<^sub>\<O>\<^sub>+" 
+      "(s \<then>\<^sub>+ a) Stage = Some NonInit"
     using Cons
-    by (auto simp: SAS_Plus_Plus_Prime_To_SAS_Plus_def  option.case_eq_if
+    by (auto simp: SAS_Plus_Plus_Prime_To_SAS_Plus_def map_le_def map_add_def option.case_eq_if
         SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator_def initialization_operators_def)
   thus ?case using Cons by auto
 qed
