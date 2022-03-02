@@ -20,12 +20,14 @@ STRIPS operators with fields corresponding to precondition, add effects as well 
 record  ('variable) strips_operator = 
   precondition_of :: "'variable list" 
   add_effects_of :: "'variable list" 
-  delete_effects_of :: "'variable list" 
+  (* delete_effects_of :: "'variable list"  *)
+  delete_effects_of :: "'variable set"
+  (* HERE!  *)
 
 \<comment> \<open> This constructor function is sometimes a more descriptive and replacement for the record 
 syntax and can moreover be helpful if the record syntax leads to type ambiguity.\<close>
 abbreviation  operator_for
-  :: "'variable list \<Rightarrow> 'variable list \<Rightarrow> 'variable list \<Rightarrow> 'variable strips_operator"
+  :: "'variable list \<Rightarrow> 'variable list \<Rightarrow> 'variable set \<Rightarrow> 'variable strips_operator" (* HERE! *)
   where "operator_for pre add delete \<equiv> \<lparr> 
     precondition_of = pre
     , add_effects_of = add
@@ -35,6 +37,7 @@ definition  to_precondition
   :: "'variable strips_operator \<Rightarrow> ('variable, bool) assignment list"
   where "to_precondition op \<equiv> map (\<lambda>v. (v, True)) (precondition_of op)" 
 
+(* Problem: Effect is defined as a list, but we might have infinite variables/assignments for a strips operator in the current interpretation *)
 definition  to_effect
   :: "'variable strips_operator \<Rightarrow> ('variable, bool) Effect" 
   where "to_effect op =  [(v\<^sub>a, True). v\<^sub>a \<leftarrow> add_effects_of op] @ [(v\<^sub>d, False). v\<^sub>d \<leftarrow> delete_effects_of op]"
@@ -43,8 +46,9 @@ text \<open> Similar to the operator definition, we use a record to represent ST
 fields for the variables, operators, as well as the initial and goal state. \<close>
 
 (* I presume operators_of is also allowed operators for this problem.  *)
+(* HERE! Because a STRIPS variable corresponds to a (variable, assignment) tuple from sas+, and a variable can have infinite possible assignments.  *) 
 record  ('variable) strips_problem =
-  variables_of :: "'variable list" ("(_\<^sub>\<V>)" [1000] 999)
+  variables_of :: "'variable set" ("(_\<^sub>\<V>)" [1000] 999)
   operators_of :: "'variable strips_operator set" ("(_\<^sub>\<O>)" [1000] 999)
   initial_of :: "'variable strips_state" ("(_\<^sub>I)" [1000] 999)
   goal_of :: "'variable strips_state" ("(_\<^sub>G)" [1000] 999)
@@ -54,8 +58,9 @@ value  "stop" (* Tell document preparation to stop collecting for the last tag *
 \<comment> \<open> This constructor function is sometimes a more descriptive and replacement for the record 
 syntax and can moreover be helpful if the record syntax leads to type ambiguity.\<close>
 (* TODO change identifier gs ~> G *)
+(* HERE! Because a STRIPS variable corresponds to a (variable, assignment) tuple from sas+, and a variable can have infinite possible assignments.  *) 
 abbreviation problem_for 
-  :: "'variable list 
+  :: "'variable set  
   \<Rightarrow> 'variable strips_operator set 
   \<Rightarrow> 'variable strips_state 
   \<Rightarrow> 'variable strips_state
@@ -70,6 +75,7 @@ type_synonym ('variable) strips_plan = "'variable strips_operator list"
 
 type_synonym ('variable) strips_parallel_plan = "'variable strips_operator list list"
 
+(* HERE! *)
 definition is_valid_operator_strips
   :: "'variable strips_problem \<Rightarrow> 'variable strips_operator \<Rightarrow> bool"
   where "is_valid_operator_strips \<Pi> op \<equiv> let 
@@ -77,11 +83,11 @@ definition is_valid_operator_strips
       ; pre = precondition_of op
       ; add = add_effects_of op
       ; del = delete_effects_of op
-    in list_all (\<lambda>v. ListMem v vs) pre 
-    \<and> list_all (\<lambda>v. ListMem v vs) add
-    \<and> list_all (\<lambda>v. ListMem v vs) del
-    \<and> list_all (\<lambda>v. \<not>ListMem v del) add
-    \<and> list_all (\<lambda>v. \<not>ListMem v add) del"
+    in list_all (\<lambda>v. v \<in> vs) pre 
+    \<and> list_all (\<lambda>v.  v \<in> vs) add
+    \<and> (\<forall>v\<in>del. v \<in> vs)
+    \<and> list_all (\<lambda>v. \<not> v \<in> del) add
+    \<and> (\<forall>v\<in>del. \<not>ListMem v add)"
 
 definition "is_valid_problem_strips \<Pi>
   \<equiv> let ops = operators_of \<Pi>
@@ -89,8 +95,8 @@ definition "is_valid_problem_strips \<Pi>
       ; I = initial_of \<Pi>
       ; G = goal_of \<Pi>
     in  (\<forall>op\<in>ops. (is_valid_operator_strips \<Pi> op)) 
-    \<and> (\<forall>v. I v \<noteq> None \<longleftrightarrow> ListMem v vs) 
-    \<and> (\<forall>v. G v \<noteq> None \<longrightarrow> ListMem v vs)"
+    \<and> (\<forall>v. I v \<noteq> None \<longleftrightarrow>  v \<in> vs) 
+    \<and> (\<forall>v. G v \<noteq> None \<longrightarrow>  v \<in> vs)"
 
 definition is_operator_applicable_in
   :: "'variable strips_state \<Rightarrow> 'variable strips_operator \<Rightarrow> bool"
