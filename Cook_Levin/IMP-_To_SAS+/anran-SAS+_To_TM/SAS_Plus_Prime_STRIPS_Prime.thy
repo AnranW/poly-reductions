@@ -28,22 +28,16 @@ definition elem_from_set :: "'a set \<Rightarrow> 'a" where
 "
 (* elem_from_set s = (THE x. x\<in>s) *)
 (* elem_from_set s = Finite_Set.fold (\<lambda>x. \<lambda>y. x) (undefined) s *)
-
 lemma "elem_from_set {True} = True " 
   apply (auto simp: elem_from_set_def Finite_Set.fold_def)
   by (smt (z3) fold_graph.cases fold_graph.emptyI fold_graph.insertI insertCI singletonD the_equality) 
-(* this proof for the other definition of elem_from_set*)
-(* by (smt (verit, best) Diff_UNIV elem_from_set_def option.set(2) singleton_iff the_equality) *)
 
-(* _ vs undefined *)
 definition elem_from_list :: "'a list \<Rightarrow> 'a" where 
 "
   elem_from_list l = fold (\<lambda>x. \<lambda>y. x) l (undefined) 
 "
-
 lemma "elem_from_list [True, False] = False " 
-  apply (auto simp: elem_from_list_def)
-  done
+  by (auto simp: elem_from_list_def)
 
 (* In this way we avoid using existential quantifier, but the use of THE might be involved depending on the definition of elem_from_set*)
 definition map_of_set :: "('a \<times> 'b) set \<Rightarrow> 'a \<rightharpoonup> 'b" where
@@ -51,10 +45,8 @@ definition map_of_set :: "('a \<times> 'b) set \<Rightarrow> 'a \<rightharpoonup
   map_of_set s = (\<lambda>x. (if (x,undefined) \<notin> s then None else (Some (snd (elem_from_set {(a,b). a=x})))))
 "
 (* alternative:
-  (let first = {x. (\<exists>y. (x,y)\<in>s)}; second = \<lambda>x. {y. \<exists>y.(x,y)\<in>s} in 
-  (\<lambda>x. if x\<notin>first then None else (Some (elem_from_set (second x)))))
+  (let first = {x. (\<exists>y. (x,y)\<in>s)}; second = \<lambda>x. {y. \<exists>y.(x,y)\<in>s} in (\<lambda>x. if x\<notin>first then None else (Some (elem_from_set (second x)))))
  *)
-
 
 (* Use elem_from_set; use `` *)
 definition state_to_strips_state
@@ -90,8 +82,8 @@ definition sas_plus_problem_to_strips_problem
   :: "('variable, 'domain) sas_plus_problem \<Rightarrow> ('variable, 'domain) assignment strips_problem" 
   ("\<phi> _ " 99)
   where "sas_plus_problem_to_strips_problem \<Psi> \<equiv> let 
-      vs = [as. v \<leftarrow> variables_of \<Psi>, as \<leftarrow> (possible_assignments_for \<Psi>) v]
-      ; ops = map (sasp_op_to_strips \<Psi>) (operators_of \<Psi>)
+      vs = {as. \<exists>v. ListMem v (variables_of \<Psi>)\<and> as \<in> (possible_assignments_for \<Psi>) v}
+      ; ops =  (sasp_op_to_strips \<Psi>)` (operators_of \<Psi>)
       ; I = state_to_strips_state \<Psi> (initial_of \<Psi>)
       ; G = state_to_strips_state \<Psi> (goal_of \<Psi>)
     in STRIPS_Prime_Representation.problem_for vs ops I G"
@@ -111,7 +103,7 @@ definition strips_state_to_state
     \<Rightarrow> ('variable, 'domain) state" 
   ("\<phi>\<^sub>S\<inverse> _ _" 99)
   where "strips_state_to_state \<Psi> s 
-    \<equiv> map_of (filter (\<lambda>(v, a). s (v, a) = Some True) (all_possible_assignments_for \<Psi>))"
+    \<equiv> map_of_set (Set.filter (\<lambda>(v, a). s (v, a) = Some True) (all_possible_assignments_for \<Psi>))"
 
 (* TODO remove problem argument *)
 definition strips_op_to_sasp 
@@ -158,23 +150,23 @@ begin
 \<comment> \<open> Set-up simp rules. \<close>
 lemma[simp]: 
   "(\<phi> \<Psi>) = (let 
-      vs = [as. v \<leftarrow> variables_of \<Psi>, as \<leftarrow> (possible_assignments_for \<Psi>) v]
-      ; ops = map (sasp_op_to_strips \<Psi>) (operators_of \<Psi>)
+      vs = {as. \<exists>v. ListMem v (variables_of \<Psi>)\<and> as \<in> (possible_assignments_for \<Psi>) v}
+      ; ops =  (sasp_op_to_strips \<Psi>) `(operators_of \<Psi>)
       ; I = state_to_strips_state \<Psi> (initial_of \<Psi>)
       ; G = state_to_strips_state \<Psi> (goal_of \<Psi>)
     in STRIPS_Prime_Representation.problem_for vs ops I G)"
   and "(\<phi>\<^sub>S \<Psi> s)
     = (let defined = filter (\<lambda>v. s v \<noteq> None) (variables_of \<Psi>) in
-      map_of (map (\<lambda>(v, a). ((v, a), the (s v) = a)) 
-        (concat [possible_assignments_for \<Psi> v. v \<leftarrow> defined])))"
+      map_of_set ( (\<lambda>(v, a). ((v, a), the (s v) = a))` 
+        (\<Union> (possible_assignments_for \<Psi> ` (set defined)))))"
   and "(\<phi>\<^sub>O \<Psi> op)
     = (let
       pre = precondition_of op
       ; add = effect_of op
-      ; delete = [(v, a'). (v, a) \<leftarrow> effect_of op, a' \<leftarrow> filter ((\<noteq>) a) (the (range_of \<Psi> v))]
+      ; delete = {(v, a'). \<exists>(v, a) \<in> set (effect_of op). a' \<in> Set.filter ((\<noteq>) a) (the (range_of \<Psi> v))}
     in STRIPS_Prime_Representation.operator_for pre add delete)" 
   and "(\<phi>\<^sub>P \<Psi> \<psi>) = [[\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]. ops \<leftarrow> \<psi>]"
-  and "(\<phi>\<^sub>S\<inverse> \<Psi> s')= map_of (filter (\<lambda>(v, a). s' (v, a) = Some True) 
+  and "(\<phi>\<^sub>S\<inverse> \<Psi> s')= map_of_set (Set.filter (\<lambda>(v, a). s' (v, a) = Some True) 
     (all_possible_assignments_for \<Psi>))" 
   and "(\<phi>\<^sub>O\<inverse> \<Psi> op') = (let 
         precondition = strips_operator.precondition_of op'
@@ -182,19 +174,19 @@ lemma[simp]:
       in \<lparr> precondition_of = precondition, effect_of = effect \<rparr>)" 
   and "(\<phi>\<^sub>P\<inverse> \<Psi> \<pi>) = [[\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> ops]. ops \<leftarrow> \<pi>]"
   unfolding
-    SAS_Plus_STRIPS.sas_plus_problem_to_strips_problem_def
+    SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def
     sas_plus_problem_to_strips_problem_def
-    SAS_Plus_STRIPS.state_to_strips_state_def
+    SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def
     state_to_strips_state_def
-    SAS_Plus_STRIPS.sasp_op_to_strips_def
+    SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
     sasp_op_to_strips_def
-    SAS_Plus_STRIPS.sas_plus_parallel_plan_to_strips_parallel_plan_def
+    SAS_Plus_Prime_STRIPS_Prime.sas_plus_parallel_plan_to_strips_parallel_plan_def
     sas_plus_parallel_plan_to_strips_parallel_plan_def
-    SAS_Plus_STRIPS.strips_state_to_state_def
+    SAS_Plus_Prime_STRIPS_Prime.strips_state_to_state_def
     strips_state_to_state_def 
-    SAS_Plus_STRIPS.strips_op_to_sasp_def
+    SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def
     strips_op_to_sasp_def 
-    SAS_Plus_STRIPS.strips_parallel_plan_to_sas_plus_parallel_plan_def
+    SAS_Plus_Prime_STRIPS_Prime.strips_parallel_plan_to_sas_plus_parallel_plan_def
     strips_parallel_plan_to_sas_plus_parallel_plan_def 
   by blast+
 
@@ -209,7 +201,7 @@ lemma is_valid_problem_sas_plus_dom_sas_plus_problem_range_of:
 
 lemma possible_assignments_for_set_is:
   assumes "v \<in> dom (sas_plus_problem.range_of \<Psi>)"
-  shows "set (possible_assignments_for \<Psi> v) 
+  shows " (possible_assignments_for \<Psi> v) 
     = { (v, a) | a. a \<in> \<R>\<^sub>+ \<Psi> v }" 
 proof -
   have "sas_plus_problem.range_of \<Psi> v \<noteq> None"
@@ -288,7 +280,7 @@ proof -
     by fastforce
   have "dom (\<phi>\<^sub>S \<Psi> s) = fst ` set (map (\<lambda>(v, a). ((v, a), the (s v) = a)) ?l)" 
     unfolding state_to_strips_state_def 
-      SAS_Plus_STRIPS.state_to_strips_state_def 
+      SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def 
     using dom_map_of_conv_image_fst[of "map (\<lambda>(v, a). ((v, a), the (s v) = a)) ?l"]
     by presburger
   also have "\<dots> = fst ` (\<lambda>(v, a). ((v, a), the (s v) = a)) ` set ?l" 
@@ -370,7 +362,7 @@ proof -
     ultimately have "(\<phi>\<^sub>S \<Psi> s) (v, a) = Some (the (s v) = a)"
       using map_of_from_function_graph_is_some_if[of 
           ?l "(v, a)" "\<lambda>(v, a). the (s v) = a"] 
-      unfolding SAS_Plus_STRIPS.state_to_strips_state_def
+      unfolding SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def
         state_to_strips_state_def Let_def case_prod_beta'
       by fastforce
   }
@@ -438,7 +430,7 @@ proof -
       by blast
   }
   thus ?thesis
-    unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+    unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
       sasp_op_to_strips_def Let_def
     by force 
 qed
@@ -455,7 +447,7 @@ proof -
     have "set (strips_problem.variables_of ?\<Pi>) 
       = set [as. v \<leftarrow> ?vs, as \<leftarrow> possible_assignments_for \<Psi> v]"
       unfolding sas_plus_problem_to_strips_problem_def 
-        SAS_Plus_STRIPS.sas_plus_problem_to_strips_problem_def
+        SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def
       by force
     also have "\<dots> = (\<Union>(set ` (\<lambda>v. possible_assignments_for \<Psi> v) ` set ?vs))" 
       using set_concat
@@ -512,13 +504,13 @@ proof -
         moreover have "(v, a') \<in> set (add_effects_of op)" 
           using assms(1) calculation(3)
           unfolding sasp_op_to_strips_def
-            SAS_Plus_STRIPS.sasp_op_to_strips_def
+            SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
             Let_def
           by fastforce
         moreover have "(v, a) \<in> set (effect_of op')" and "(v, a') \<in> set (effect_of op')" 
           using assms(1) v_a_in_add_effects_of_op calculation(5)
           unfolding sasp_op_to_strips_def 
-            SAS_Plus_STRIPS.sasp_op_to_strips_def
+            SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
             Let_def 
           by force+
         ultimately show False 
@@ -547,13 +539,13 @@ proof -
         moreover have "(v, a') \<in> set (add_effects_of op)" 
           using assms(1) calculation(4)
           unfolding sasp_op_to_strips_def 
-            SAS_Plus_STRIPS.sasp_op_to_strips_def
+            SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
             Let_def
           by fastforce
         moreover have "(v, a) \<in> set (effect_of op')" and "(v, a') \<in> set (effect_of op')" 
           using assms(1) calculation(2, 6)
           unfolding sasp_op_to_strips_def 
-            SAS_Plus_STRIPS.sasp_op_to_strips_def Let_def 
+            SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def Let_def 
           by force+
         ultimately show False 
           using nb 
@@ -581,7 +573,7 @@ proof -
     then obtain op' 
       where op_is: "op = \<phi>\<^sub>O \<Psi> op'" 
         and op'_in_operators: "op' \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
-      unfolding SAS_Plus_STRIPS.sas_plus_problem_to_strips_problem_def
+      unfolding SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def
         sas_plus_problem_to_strips_problem_def 
         sasp_op_to_strips_def 
       by auto
@@ -594,7 +586,7 @@ proof -
       \<comment> \<open> TODO slow. \<close>
       then have "(v, a) \<in> set (sas_plus_operator.precondition_of op')" 
         using op_is
-        unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def 
+        unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def 
           sasp_op_to_strips_def
         by force
       moreover have "v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+)" 
@@ -614,7 +606,7 @@ proof -
       assume "(v, a) \<in> set (strips_operator.add_effects_of op)"
       then have "(v, a) \<in> set (effect_of op')" 
         using op_is
-        unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+        unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
           sasp_op_to_strips_def
         by force
       then have "v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+)" and "a \<in> \<R>\<^sub>+ \<Psi> v" 
@@ -693,9 +685,9 @@ proof -
             and "a \<in> \<R>\<^sub>+ \<Psi> v"
           using state_to_strips_state_dom_element_iff[OF assms(1), of v a  ?I] 
           unfolding sas_plus_problem_to_strips_problem_def 
-            SAS_Plus_STRIPS.sas_plus_problem_to_strips_problem_def 
+            SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def 
             state_to_strips_state_def
-            SAS_Plus_STRIPS.state_to_strips_state_def 
+            SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def 
           by simp+
         thus "ListMem x ?vs'"
           unfolding ListMem_iff
@@ -718,9 +710,9 @@ proof -
           by auto
         ultimately have "(v, a) \<in> dom ?I'" 
           using state_to_strips_state_dom_element_iff[OF assms(1), of v a ?I]
-          unfolding SAS_Plus_STRIPS.sas_plus_problem_to_strips_problem_def 
+          unfolding SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def 
             sas_plus_problem_to_strips_problem_def
-            SAS_Plus_STRIPS.state_to_strips_state_def
+            SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def
             state_to_strips_state_def
           by force 
         thus "?I' x \<noteq> None"
@@ -864,7 +856,7 @@ proof -
       by simp
   }
   thus ?thesis
-    unfolding SAS_Plus_STRIPS.strips_state_to_state_def 
+    unfolding SAS_Plus_Prime_STRIPS_Prime.strips_state_to_state_def 
       strips_state_to_state_def dom_map_of_conv_image_fst
     by blast
 qed
@@ -889,7 +881,7 @@ proof -
       {
         have "(v, a) \<in> set ?l" 
           using s_of_v_is_Some_a 
-          unfolding SAS_Plus_STRIPS.strips_state_to_state_def 
+          unfolding SAS_Plus_Prime_STRIPS_Prime.strips_state_to_state_def 
             strips_state_to_state_def 
           using map_of_SomeD
           by fast
@@ -928,7 +920,7 @@ proof -
       }
       ultimately show "?s v = Some a"  
         using map_of_constant_assignments_defined_if[of ?l v a]
-        unfolding SAS_Plus_STRIPS.strips_state_to_state_def
+        unfolding SAS_Plus_Prime_STRIPS_Prime.strips_state_to_state_def
           strips_state_to_state_def
         by blast
     qed
@@ -970,7 +962,7 @@ proof -
     by force
   \<comment> \<open> TODO slow.\<close>
   ultimately show ?thesis 
-    unfolding SAS_Plus_STRIPS.state_to_strips_state_def
+    unfolding SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def
       state_to_strips_state_def 
     using map_of_from_function_graph_is_some_if[of ?l "(v, a)" ?f] 
     unfolding split_def
@@ -1096,7 +1088,7 @@ proof -
   }
   \<comment> \<open> TODO slow. \<close>
   thus ?thesis
-    unfolding SAS_Plus_STRIPS.strips_state_to_state_def
+    unfolding SAS_Plus_Prime_STRIPS_Prime.strips_state_to_state_def
       strips_state_to_state_def all_possible_assignments_for_def
     by simp
 qed
@@ -1281,15 +1273,15 @@ lemma sas_plus_operator_inverse_is:
 proof -
   let ?op = "\<phi>\<^sub>O\<inverse> \<Psi> (\<phi>\<^sub>O \<Psi> op)"
   have "precondition_of ?op = precondition_of op"
-    unfolding SAS_Plus_STRIPS.strips_op_to_sasp_def
+    unfolding SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def
       strips_op_to_sasp_def
-      SAS_Plus_STRIPS.sasp_op_to_strips_def
+      SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
       sasp_op_to_strips_def
     by fastforce
   moreover have "effect_of ?op = effect_of op" 
-    unfolding SAS_Plus_STRIPS.strips_op_to_sasp_def
+    unfolding SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def
       strips_op_to_sasp_def
-      SAS_Plus_STRIPS.sasp_op_to_strips_def
+      SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
       sasp_op_to_strips_def
     by force
   ultimately show ?thesis 
@@ -1373,7 +1365,7 @@ proof -
       by auto
     moreover have "strips_operator.precondition_of op' = precondition_of op" 
       using calculation(4) 
-      unfolding SAS_Plus_STRIPS.strips_op_to_sasp_def
+      unfolding SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def
         strips_op_to_sasp_def
       by simp
     ultimately have "\<exists>op' \<in> set ops'. op = (\<phi>\<^sub>O\<inverse> \<Psi> op')
@@ -1394,7 +1386,7 @@ proof -
         by blast
       moreover have "strips_operator.precondition_of op' = precondition_of op" 
         using calculation(2) 
-        unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+        unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
           sasp_op_to_strips_def
         by simp
       moreover have "(v, a) \<in> set (precondition_of op)"
@@ -1537,13 +1529,13 @@ proof -
         \<comment> \<open> TODO slow. \<close>
         moreover have "(v, a) \<in> set (effect_of op\<^sub>1)"  
           using op\<^sub>1'_is op\<^sub>2'_is calculation(1, 2)
-          unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+          unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
             sasp_op_to_strips_def 
           by force
         moreover {
           have "(v', a') \<in> set (effect_of op\<^sub>2)" 
             using op\<^sub>2'_is calculation(2) 
-            unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+            unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
               sasp_op_to_strips_def
             by force
           hence "a' \<in> \<R>\<^sub>+ \<Psi> v"
@@ -1595,7 +1587,7 @@ proof -
       using op\<^sub>1_is op\<^sub>2_is 
       unfolding are_operator_effects_consistent_def
         sasp_op_to_strips_def 
-        SAS_Plus_STRIPS.sasp_op_to_strips_def
+        SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
         list_all_iff Let_def
       by simp
   }
@@ -1729,7 +1721,7 @@ proof -
       assume "(v, a) \<in> set (strips_operator.precondition_of op')"
       moreover have v_a_in_precondition_of_op: "(v, a) \<in> set (precondition_of op)" 
         using op_is calculation 
-        unfolding SAS_Plus_STRIPS.strips_op_to_sasp_def
+        unfolding SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def
           strips_op_to_sasp_def
         by auto
       moreover have "map_of (precondition_of op) v = Some a" 
@@ -1825,7 +1817,7 @@ proof -
       by blast
     moreover have "(v, a) \<in> set (effect_of op\<^sub>1)" 
       using calculation(5, 10) 
-      unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+      unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
         sasp_op_to_strips_def
       by fastforce
     moreover have "v = v'" and "a = a'"
@@ -2081,7 +2073,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
     \<comment> \<open> TODO slow.\<close>
     also have "\<dots> = set (effect_of op) \<union> set (strips_operator.delete_effects_of op')" 
       using op'_is 
-      unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+      unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
         sasp_op_to_strips_def 
       by auto
     \<comment> \<open> TODO slow.\<close>
@@ -2110,7 +2102,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
   \<comment> \<open> TODO refactor. \<close>
   have nb\<^sub>6: "set (add_effects_of op') = set (effect_of op)"
     using op'_is 
-    unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+    unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
       sasp_op_to_strips_def
     by auto
   \<comment> \<open> TODO refactor. \<close>
@@ -2666,7 +2658,7 @@ proof -
         using state_to_strips_state_map_le_iff[OF assms(1, 4, 5)]
         by blast
       thus ?case 
-        unfolding SAS_Plus_STRIPS.strips_parallel_plan_to_sas_plus_parallel_plan_def
+        unfolding SAS_Plus_Prime_STRIPS_Prime.strips_parallel_plan_to_sas_plus_parallel_plan_def
           strips_parallel_plan_to_sas_plus_parallel_plan_def 
         by fastforce
     next
@@ -2746,9 +2738,9 @@ proof -
               using sas_plus_equivalent_to_strips_i_a_IV[OF assms(1) nb\<^sub>1, of I] True
               by simp
             moreover have "(\<phi>\<^sub>P\<inverse> \<Psi> (ops' # \<pi>)) = ?ops # (\<phi>\<^sub>P\<inverse> \<Psi> \<pi>)" 
-              unfolding SAS_Plus_STRIPS.strips_parallel_plan_to_sas_plus_parallel_plan_def
+              unfolding SAS_Plus_Prime_STRIPS_Prime.strips_parallel_plan_to_sas_plus_parallel_plan_def
                 strips_parallel_plan_to_sas_plus_parallel_plan_def
-                SAS_Plus_STRIPS.strips_op_to_sasp_def
+                SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def
                   strips_op_to_sasp_def  
               by simp
             ultimately have "execute_parallel_plan_sas_plus I (\<phi>\<^sub>P\<inverse> \<Psi> (ops' # \<pi>)) 
@@ -2825,9 +2817,9 @@ proof -
           }
           moreover {
             have "(\<phi>\<^sub>P\<inverse> \<Psi> (ops' # \<pi>)) = ?ops # (\<phi>\<^sub>P\<inverse> \<Psi> \<pi>)" 
-              unfolding SAS_Plus_STRIPS.strips_parallel_plan_to_sas_plus_parallel_plan_def
+              unfolding SAS_Plus_Prime_STRIPS_Prime.strips_parallel_plan_to_sas_plus_parallel_plan_def
                 strips_parallel_plan_to_sas_plus_parallel_plan_def
-                SAS_Plus_STRIPS.strips_op_to_sasp_def
+                SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def
                 strips_op_to_sasp_def
               by simp
             hence "G \<subseteq>\<^sub>m execute_parallel_plan_sas_plus I (?ops # (\<phi>\<^sub>P\<inverse> \<Psi> \<pi>))
@@ -2837,9 +2829,9 @@ proof -
           }
           ultimately show ?thesis 
             using state_to_strips_state_map_le_iff[OF Cons.prems(1, 4, 5)] 
-            unfolding SAS_Plus_STRIPS.strips_parallel_plan_to_sas_plus_parallel_plan_def
+            unfolding SAS_Plus_Prime_STRIPS_Prime.strips_parallel_plan_to_sas_plus_parallel_plan_def
               strips_parallel_plan_to_sas_plus_parallel_plan_def
-              SAS_Plus_STRIPS.strips_op_to_sasp_def
+              SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def
               strips_op_to_sasp_def
             by force
         qed
@@ -2928,8 +2920,8 @@ proof -
   thus ?thesis 
     unfolding list_all_iff ListMem_iff 
       strips_parallel_plan_to_sas_plus_parallel_plan_def
-      SAS_Plus_STRIPS.strips_parallel_plan_to_sas_plus_parallel_plan_def
-      SAS_Plus_STRIPS.strips_op_to_sasp_def
+      SAS_Plus_Prime_STRIPS_Prime.strips_parallel_plan_to_sas_plus_parallel_plan_def
+      SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def
       strips_op_to_sasp_def
     by auto
 qed
@@ -3133,7 +3125,7 @@ proof -
       by blast
     moreover have "(v, a) \<in> set (effect_of op\<^sub>1)" 
       using calculation(5, 10) 
-      unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+      unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
         sasp_op_to_strips_def Let_def
       by fastforce
     moreover have "v = v'" and "a = a'"
@@ -3191,7 +3183,7 @@ proof -
           assume v_a_in_preconditions': "(v, a) \<in> set (strips_operator.precondition_of op')"
           have v_a_in_preconditions: "(v, a) \<in> set (precondition_of op)" 
             using op'_is
-            unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+            unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
               sasp_op_to_strips_def Let_def
             using v_a_in_preconditions' 
             by force
@@ -3352,7 +3344,7 @@ proof -
               moreover have "(v, a) \<in> set (strips_operator.precondition_of op')"
                 using op'_is 
                 unfolding sasp_op_to_strips_def
-                  SAS_Plus_STRIPS.sasp_op_to_strips_def
+                  SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
                 using calculation(3) 
                 by auto 
               moreover have "?s' (v, a) = Some True"
@@ -3417,7 +3409,7 @@ proof -
             by blast
           moreover have "(v, a) \<in> set (add_effects_of op\<^sub>1')"
             using calculation(3, 8)
-            unfolding SAS_Plus_STRIPS.sasp_op_to_strips_def
+            unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
               sasp_op_to_strips_def Let_def
             by force
           moreover {
@@ -3482,7 +3474,7 @@ proof -
         using state_to_strips_state_map_le_iff[OF Nil.prems(1, 4, 5)] 
           calculation..
       ultimately show ?case 
-        unfolding SAS_Plus_STRIPS.sas_plus_parallel_plan_to_strips_parallel_plan_def
+        unfolding SAS_Plus_Prime_STRIPS_Prime.sas_plus_parallel_plan_to_strips_parallel_plan_def
           sas_plus_parallel_plan_to_strips_parallel_plan_def
         by simp
     next
@@ -3516,9 +3508,9 @@ proof -
         {
           have "(\<phi>\<^sub>P \<Psi> (ops # \<psi>)) = ?ops' # (\<phi>\<^sub>P \<Psi> \<psi>)"
             unfolding sas_plus_parallel_plan_to_strips_parallel_plan_def
-              SAS_Plus_STRIPS.sas_plus_parallel_plan_to_strips_parallel_plan_def 
+              SAS_Plus_Prime_STRIPS_Prime.sas_plus_parallel_plan_to_strips_parallel_plan_def 
               sasp_op_to_strips_def
-              SAS_Plus_STRIPS.sasp_op_to_strips_def
+              SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
             by simp
           moreover have "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
             using Cons.prems(6)
@@ -3614,9 +3606,9 @@ proof -
         moreover {
           have "?\<pi> = ?ops' # (\<phi>\<^sub>P \<Psi> \<psi>)"
             unfolding sas_plus_parallel_plan_to_strips_parallel_plan_def
-              SAS_Plus_STRIPS.sas_plus_parallel_plan_to_strips_parallel_plan_def 
+              SAS_Plus_Prime_STRIPS_Prime.sas_plus_parallel_plan_to_strips_parallel_plan_def 
               sasp_op_to_strips_def
-              SAS_Plus_STRIPS.sasp_op_to_strips_def Let_def
+              SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def Let_def
             by auto
           moreover have "set ?ops' \<subseteq> set (strips_problem.operators_of ?\<Pi>)"
             using strips_equivalent_to_sas_plus_i_a_II(1)[OF assms(1)] Cons.prems(6)
@@ -3674,9 +3666,9 @@ proof -
   ultimately show ?thesis
     using strips_equivalent_to_sas_plus_i_a[OF assms(1), of ?I ?G \<psi>]
     unfolding sas_plus_problem_to_strips_problem_def
-      SAS_Plus_STRIPS.sas_plus_problem_to_strips_problem_def 
+      SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def 
       state_to_strips_state_def
-      SAS_Plus_STRIPS.state_to_strips_state_def
+      SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def
     by force
 qed
 
@@ -3695,7 +3687,7 @@ proof -
     by simp 
   have nb\<^sub>1: "\<forall>op \<in> set ?ops. (\<exists>op' \<in> set ?ops'. op' = (\<phi>\<^sub>O \<Psi> op))" 
     unfolding sas_plus_problem_to_strips_problem_def
-      SAS_Plus_STRIPS.sas_plus_problem_to_strips_problem_def Let_def 
+      SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def Let_def 
       sasp_op_to_strips_def
     by force
   {
@@ -3714,11 +3706,11 @@ proof -
   thus ?thesis 
     unfolding list_all_iff ListMem_iff Let_def  
       sas_plus_problem_to_strips_problem_def
-      SAS_Plus_STRIPS.sas_plus_problem_to_strips_problem_def
+      SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def
       sas_plus_parallel_plan_to_strips_parallel_plan_def
-      SAS_Plus_STRIPS.sas_plus_parallel_plan_to_strips_parallel_plan_def 
+      SAS_Plus_Prime_STRIPS_Prime.sas_plus_parallel_plan_to_strips_parallel_plan_def 
       sasp_op_to_strips_def
-      SAS_Plus_STRIPS.sasp_op_to_strips_def 
+      SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def 
       Let_def 
     by auto
 qed
@@ -3785,7 +3777,7 @@ proof -
     have "set (\<phi>\<^sub>P \<Psi> (embed \<psi>)) = { [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]  | ops. ops \<in> set ?\<psi>' }"
       
       unfolding sas_plus_parallel_plan_to_strips_parallel_plan_def  
-        SAS_Plus_STRIPS.sas_plus_parallel_plan_to_strips_parallel_plan_def
+        SAS_Plus_Prime_STRIPS_Prime.sas_plus_parallel_plan_to_strips_parallel_plan_def
         sasp_op_to_strips_def set_map
       using setcompr_eq_image  
       by blast
@@ -3808,9 +3800,9 @@ proof -
   let ?\<psi>' = "List_Supplement.embed \<psi>"
   have "concat (\<phi>\<^sub>P \<Psi> ?\<psi>') = map (\<lambda>op. \<phi>\<^sub>O \<Psi> op) (concat ?\<psi>')" 
     unfolding sas_plus_parallel_plan_to_strips_parallel_plan_def
-      SAS_Plus_STRIPS.sas_plus_parallel_plan_to_strips_parallel_plan_def
+      SAS_Plus_Prime_STRIPS_Prime.sas_plus_parallel_plan_to_strips_parallel_plan_def
       sasp_op_to_strips_def
-      SAS_Plus_STRIPS.sasp_op_to_strips_def Let_def
+      SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def Let_def
       map_concat
     by blast
   also have "\<dots> = map (\<lambda>op. \<phi>\<^sub>O \<Psi> op) \<psi>" 
@@ -3894,7 +3886,7 @@ proof -
   {
     have "set (\<phi>\<^sub>P\<inverse> \<Pi> (embed \<pi>)) = { [\<phi>\<^sub>O\<inverse> \<Pi> op. op \<leftarrow> ops]  | ops. ops \<in> set ?\<pi>' }"
       unfolding strips_parallel_plan_to_sas_plus_parallel_plan_def
-        SAS_Plus_STRIPS.strips_parallel_plan_to_sas_plus_parallel_plan_def
+        SAS_Plus_Prime_STRIPS_Prime.strips_parallel_plan_to_sas_plus_parallel_plan_def
         strips_op_to_sasp_def set_map
       using setcompr_eq_image 
       by blast
@@ -3917,9 +3909,9 @@ proof -
   let ?\<pi>' = "List_Supplement.embed \<pi>"
   have "concat (\<phi>\<^sub>P\<inverse> \<Pi> ?\<pi>') = map (\<lambda>op. \<phi>\<^sub>O\<inverse> \<Pi> op) (concat ?\<pi>')" 
     unfolding strips_parallel_plan_to_sas_plus_parallel_plan_def
-      SAS_Plus_STRIPS.strips_parallel_plan_to_sas_plus_parallel_plan_def
+      SAS_Plus_Prime_STRIPS_Prime.strips_parallel_plan_to_sas_plus_parallel_plan_def
       strips_op_to_sasp_def
-      SAS_Plus_STRIPS.strips_op_to_sasp_def Let_def
+      SAS_Plus_Prime_STRIPS_Prime.strips_op_to_sasp_def Let_def
       map_concat 
     by simp
   also have "\<dots> = map (\<lambda>op. \<phi>\<^sub>O\<inverse> \<Pi> op) \<pi>" 
@@ -4018,7 +4010,7 @@ lemma sasp_op_to_strips_injective:
         by argo
       hence "sas_plus_operator.precondition_of op\<^sub>1 = sas_plus_operator.precondition_of op\<^sub>2"
         unfolding sasp_op_to_strips_def
-          SAS_Plus_STRIPS.sasp_op_to_strips_def
+          SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
           Let_def 
         by simp
     }
@@ -4029,7 +4021,7 @@ lemma sasp_op_to_strips_injective:
         by argo
       hence "sas_plus_operator.effect_of op\<^sub>1 = sas_plus_operator.effect_of op\<^sub>2"
         unfolding sasp_op_to_strips_def Let_def
-          SAS_Plus_STRIPS.sasp_op_to_strips_def
+          SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
         by simp
     }
     ultimately show ?thesis 
@@ -4360,7 +4352,7 @@ proof -
   thus ?thesis
     using bounded_plan_set_finite rev_finite_subset[of ?P\<^sub>k ?Sol\<^sub>k] 
     unfolding state_to_strips_state_def
-      SAS_Plus_STRIPS.state_to_strips_state_def operators_of_def
+      SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def operators_of_def
     by blast
 qed
 
