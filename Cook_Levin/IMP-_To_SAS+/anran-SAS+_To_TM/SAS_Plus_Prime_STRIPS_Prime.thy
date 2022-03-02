@@ -22,15 +22,41 @@ definition all_possible_assignments_for
   :: "('variable, 'domain) sas_plus_problem \<Rightarrow> ('variable \<times> 'domain) set"
   where "all_possible_assignments_for \<Psi> \<equiv> \<Union> (possible_assignments_for \<Psi> ` (set ( variables_of \<Psi>)))" 
 
-(* definition possible_assignments_for 
-  :: "('variable, 'domain) sas_plus_problem \<Rightarrow> 'variable \<Rightarrow> ('variable \<times> 'domain) list" 
-  where "possible_assignments_for \<Psi> v \<equiv> [(v, a). a \<in> the (range_of \<Psi> v)]"
+definition elem_from_set :: "'a set \<Rightarrow> 'a" where
+"
+  elem_from_set s = Finite_Set.fold (\<lambda>x. \<lambda>y. x) (undefined) s
+"
+(* elem_from_set s = (THE x. x\<in>s) *)
+(* elem_from_set s = Finite_Set.fold (\<lambda>x. \<lambda>y. x) (undefined) s *)
 
-definition all_possible_assignments_for
-  :: "('variable, 'domain) sas_plus_problem \<Rightarrow> ('variable \<times> 'domain) list"
-  where "all_possible_assignments_for \<Psi> 
-    \<equiv> concat [possible_assignments_for \<Psi> v. v \<leftarrow> variables_of \<Psi>]"  *)
+lemma "elem_from_set {True} = True " 
+  apply (auto simp: elem_from_set_def Finite_Set.fold_def)
+  by (smt (z3) fold_graph.cases fold_graph.emptyI fold_graph.insertI insertCI singletonD the_equality) 
+(* this proof for the other definition of elem_from_set*)
+(* by (smt (verit, best) Diff_UNIV elem_from_set_def option.set(2) singleton_iff the_equality) *)
 
+(* _ vs undefined *)
+definition elem_from_list :: "'a list \<Rightarrow> 'a" where 
+"
+  elem_from_list l = fold (\<lambda>x. \<lambda>y. x) l (undefined) 
+"
+
+lemma "elem_from_list [True, False] = False " 
+  apply (auto simp: elem_from_list_def)
+  done
+
+(* In this way we avoid using existential quantifier, but the use of THE might be involved depending on the definition of elem_from_set*)
+definition map_of_set :: "('a \<times> 'b) set \<Rightarrow> 'a \<rightharpoonup> 'b" where
+"
+  map_of_set s = (\<lambda>x. (if (x,undefined) \<notin> s then None else (Some (snd (elem_from_set {(a,b). a=x})))))
+"
+(* alternative:
+  (let first = {x. (\<exists>y. (x,y)\<in>s)}; second = \<lambda>x. {y. \<exists>y.(x,y)\<in>s} in 
+  (\<lambda>x. if x\<notin>first then None else (Some (elem_from_set (second x)))))
+ *)
+
+
+(* Use elem_from_set; use `` *)
 definition state_to_strips_state
   :: "('variable, 'domain) sas_plus_problem 
     \<Rightarrow> ('variable, 'domain) state 
@@ -38,19 +64,27 @@ definition state_to_strips_state
   ("\<phi>\<^sub>S _ _" 99)
   where "state_to_strips_state \<Psi> s 
     \<equiv> let defined = filter (\<lambda>v. s v \<noteq> None) (variables_of \<Psi>) in
-      map_of (map (\<lambda>(v, a). ((v, a), the (s v) = a)) 
-        (concat [possible_assignments_for \<Psi> v. v \<leftarrow> defined]))"
+      map_of_set ( (\<lambda>(v, a). ((v, a), the (s v) = a)) `
+        (\<Union> (possible_assignments_for \<Psi>`( set defined))))"
 
+(* 
+  type precondition_of: list of (variable,value) tuples, in sas+
+  type pre: list of variables, in strips 
+  \<Rightarrow> the variable in strips is a tuple of (variable, value) in sas+
+  \<Rightarrow> the value in strips is true or false, indicating if the variable has this value in sas+
+*)
 definition sasp_op_to_strips
   :: "('variable, 'domain) sas_plus_problem
     \<Rightarrow> ('variable, 'domain) sas_plus_operator
     \<Rightarrow> ('variable, 'domain) assignment strips_operator" 
   ("\<phi>\<^sub>O _ _" 99)
   where "sasp_op_to_strips \<Psi> op \<equiv> let
-      pre = precondition_of op
+      pre = precondition_of op 
       ; add = effect_of op
-      ; delete = [(v, a'). (v, a) \<leftarrow> effect_of op, a' \<leftarrow> filter ((\<noteq>) a) (the (range_of \<Psi> v))]
-    in STRIPS_Representation.operator_for pre add delete"
+      ; delete = {(v, a'). \<exists>(v, a) \<in> set (effect_of op). a' \<in> Set.filter ((\<noteq>) a) (the (range_of \<Psi> v))}
+    in STRIPS_Prime_Representation.operator_for pre add delete"
+(* A sas+ operator assigns a variable to a singular value, so in STRIPS only the corresponding pair is true. 
+   This means that "delete" should make all other values false, but since we have a set of possible values, this has to be a set. *)
 
 definition sas_plus_problem_to_strips_problem
   :: "('variable, 'domain) sas_plus_problem \<Rightarrow> ('variable, 'domain) assignment strips_problem" 
@@ -60,7 +94,7 @@ definition sas_plus_problem_to_strips_problem
       ; ops = map (sasp_op_to_strips \<Psi>) (operators_of \<Psi>)
       ; I = state_to_strips_state \<Psi> (initial_of \<Psi>)
       ; G = state_to_strips_state \<Psi> (goal_of \<Psi>)
-    in STRIPS_Representation.problem_for vs ops I G"
+    in STRIPS_Prime_Representation.problem_for vs ops I G"
 
 definition sas_plus_parallel_plan_to_strips_parallel_plan
   :: "('variable, 'domain) sas_plus_problem
@@ -128,7 +162,7 @@ lemma[simp]:
       ; ops = map (sasp_op_to_strips \<Psi>) (operators_of \<Psi>)
       ; I = state_to_strips_state \<Psi> (initial_of \<Psi>)
       ; G = state_to_strips_state \<Psi> (goal_of \<Psi>)
-    in STRIPS_Representation.problem_for vs ops I G)"
+    in STRIPS_Prime_Representation.problem_for vs ops I G)"
   and "(\<phi>\<^sub>S \<Psi> s)
     = (let defined = filter (\<lambda>v. s v \<noteq> None) (variables_of \<Psi>) in
       map_of (map (\<lambda>(v, a). ((v, a), the (s v) = a)) 
@@ -138,7 +172,7 @@ lemma[simp]:
       pre = precondition_of op
       ; add = effect_of op
       ; delete = [(v, a'). (v, a) \<leftarrow> effect_of op, a' \<leftarrow> filter ((\<noteq>) a) (the (range_of \<Psi> v))]
-    in STRIPS_Representation.operator_for pre add delete)" 
+    in STRIPS_Prime_Representation.operator_for pre add delete)" 
   and "(\<phi>\<^sub>P \<Psi> \<psi>) = [[\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]. ops \<leftarrow> \<psi>]"
   and "(\<phi>\<^sub>S\<inverse> \<Psi> s')= map_of (filter (\<lambda>(v, a). s' (v, a) = Some True) 
     (all_possible_assignments_for \<Psi>))" 
@@ -628,7 +662,7 @@ proof -
       by fast+
   }
   thus ?thesis
-    unfolding is_valid_operator_strips_def STRIPS_Representation.is_valid_operator_strips_def 
+    unfolding is_valid_operator_strips_def STRIPS_Prime_Representation.is_valid_operator_strips_def 
       list_all_iff ListMem_iff Let_def 
     by blast
 qed
@@ -760,7 +794,7 @@ proof -
     using is_valid_problem_sas_plus_then_strips_transformation_too_v[OF assms].
   ultimately show ?thesis 
     using is_valid_problem_strips_def 
-    unfolding STRIPS_Representation.is_valid_problem_strips_def
+    unfolding STRIPS_Prime_Representation.is_valid_problem_strips_def
     by fastforce
 qed 
 
@@ -1290,7 +1324,7 @@ lemma strips_operator_inverse_is:
 lemma sas_plus_equivalent_to_strips_i_a_I:
   assumes "is_valid_problem_sas_plus \<Psi>"
     and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
-    and "STRIPS_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops'"
+    and "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops'"
     and "op \<in> set [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']" 
   shows "map_of (precondition_of op) \<subseteq>\<^sub>m (\<phi>\<^sub>S\<inverse> \<Psi> (\<phi>\<^sub>S \<Psi> s))" 
 proof -
@@ -1458,8 +1492,8 @@ lemma sas_plus_equivalent_to_strips_i_a_II:
   fixes s :: "('variable, 'domain) state" 
   assumes "is_valid_problem_sas_plus \<Psi>"
     and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
-    and "STRIPS_Semantics.are_all_operators_applicable (\<phi>\<^sub>s \<Psi> s) ops' 
-      \<and> STRIPS_Semantics.are_all_operator_effects_consistent ops'"
+    and "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>s \<Psi> s) ops' 
+      \<and> STRIPS_Prime_Semantics.are_all_operator_effects_consistent ops'"
   shows "are_all_operator_effects_consistent [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']" 
 proof -
   let ?s' = "\<phi>\<^sub>S \<Psi> s"
@@ -1475,9 +1509,9 @@ proof -
   {
     fix op\<^sub>1' op\<^sub>2'
     assume "op\<^sub>1' \<in> set ops'" and "op\<^sub>2' \<in> set ops'"
-    hence "STRIPS_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'" 
+    hence "STRIPS_Prime_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'" 
       using assms(3)
-      unfolding STRIPS_Semantics.are_all_operator_effects_consistent_def list_all_iff
+      unfolding STRIPS_Prime_Semantics.are_all_operator_effects_consistent_def list_all_iff
       by blast
   } note nb\<^sub>1 = this
   {
@@ -1520,13 +1554,13 @@ proof -
           using sasp_op_to_strips_set_delete_effects_is
             op\<^sub>1'_is is_valid_op\<^sub>1 calculation(3, 4, 5, 6)
           by blast
-        moreover have "\<not>STRIPS_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'" 
-          unfolding STRIPS_Semantics.are_operator_effects_consistent_def list_ex_iff 
+        moreover have "\<not>STRIPS_Prime_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'" 
+          unfolding STRIPS_Prime_Semantics.are_operator_effects_consistent_def list_ex_iff 
           using calculation(2, 3, 7)
           by meson
         ultimately show False 
           using assms(3) op\<^sub>1'_in_ops' op\<^sub>2'_in_ops'
-          unfolding STRIPS_Semantics.are_all_operator_effects_consistent_def list_all_iff
+          unfolding STRIPS_Prime_Semantics.are_all_operator_effects_consistent_def list_all_iff
           by blast
       qed
   } note nb\<^sub>3 = this
@@ -1581,8 +1615,8 @@ no two assignments of the same variable to different values exist). \<close>
 lemma sas_plus_equivalent_to_strips_i_a_IV: 
   assumes "is_valid_problem_sas_plus \<Psi>"
     and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
-    and "STRIPS_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops' 
-      \<and> STRIPS_Semantics.are_all_operator_effects_consistent ops'"
+    and "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops' 
+      \<and> STRIPS_Prime_Semantics.are_all_operator_effects_consistent ops'"
   shows "are_all_operators_applicable_in (\<phi>\<^sub>S\<inverse> \<Psi> (\<phi>\<^sub>S \<Psi> s)) [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops'] \<and>
     are_all_operator_effects_consistent [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']" 
 proof -
@@ -1601,7 +1635,7 @@ proof -
     using state_to_strips_state_effect_consistent[OF assms(1)] 
     by blast
   {
-    have "STRIPS_Semantics.are_all_operators_applicable ?s' ops'" 
+    have "STRIPS_Prime_Semantics.are_all_operators_applicable ?s' ops'" 
       using assms(3)
       by simp
     moreover have "list_all (\<lambda>op. map_of (precondition_of op) \<subseteq>\<^sub>m ?s) ?ops"
@@ -1634,7 +1668,7 @@ lemma sas_plus_equivalent_to_strips_i_a_VI:
     and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "are_all_operators_applicable_in s [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops'] \<and>
       are_all_operator_effects_consistent [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']"  
-  shows "STRIPS_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops'"
+  shows "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops'"
 proof -   
   let ?vs = "variables_of \<Psi>" 
     and ?D = "range_of \<Psi>"
@@ -1729,7 +1763,7 @@ proof -
   }
   thus ?thesis 
     unfolding are_all_operators_applicable_def is_operator_applicable_in_def 
-      STRIPS_Representation.is_operator_applicable_in_def list_all_iff
+      STRIPS_Prime_Representation.is_operator_applicable_in_def list_all_iff
     by simp
 qed
 
@@ -1741,7 +1775,7 @@ lemma sas_plus_equivalent_to_strips_i_a_VII:
     and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "are_all_operators_applicable_in s [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops'] \<and>
     are_all_operator_effects_consistent [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']"  
-  shows "STRIPS_Semantics.are_all_operator_effects_consistent ops'"
+  shows "STRIPS_Prime_Semantics.are_all_operator_effects_consistent ops'"
 proof - 
   let ?s' = "\<phi>\<^sub>S \<Psi> s" 
     and ?ops = "[\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']"
@@ -1839,14 +1873,14 @@ proof -
   {
     fix op\<^sub>1' op\<^sub>2'
     assume op\<^sub>1'_in_ops: "op\<^sub>1' \<in> set ops'" and op\<^sub>2'_in_ops: "op\<^sub>2' \<in> set ops'" 
-    have "STRIPS_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'"
+    have "STRIPS_Prime_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'"
       proof (rule ccontr)
-        assume "\<not>STRIPS_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'"
+        assume "\<not>STRIPS_Prime_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'"
         then consider (A) "\<exists>(v, a) \<in> set (add_effects_of op\<^sub>1'). 
           \<exists>(v', a') \<in> set (delete_effects_of op\<^sub>2'). (v, a) = (v', a')"
           | (B) "\<exists>(v, a) \<in> set (add_effects_of op\<^sub>2'). 
           \<exists>(v', a') \<in> set (delete_effects_of op\<^sub>1'). (v, a) = (v', a')"
-          unfolding STRIPS_Semantics.are_operator_effects_consistent_def list_ex_iff
+          unfolding STRIPS_Prime_Semantics.are_operator_effects_consistent_def list_ex_iff
           by fastforce
         thus False 
           using nb\<^sub>2[OF op\<^sub>1'_in_ops op\<^sub>2'_in_ops] nb\<^sub>2[OF op\<^sub>2'_in_ops op\<^sub>1'_in_ops] assms(5)
@@ -1854,8 +1888,8 @@ proof -
       qed
   }
   thus ?thesis 
-    unfolding STRIPS_Semantics.are_all_operator_effects_consistent_def 
-      STRIPS_Semantics.are_operator_effects_consistent_def list_all_iff
+    unfolding STRIPS_Prime_Semantics.are_all_operator_effects_consistent_def 
+      STRIPS_Prime_Semantics.are_operator_effects_consistent_def list_all_iff
     by blast
 qed
 
@@ -1866,8 +1900,8 @@ lemma sas_plus_equivalent_to_strips_i_a_VIII:
     and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "are_all_operators_applicable_in s [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops'] \<and>
     are_all_operator_effects_consistent [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']"  
-  shows "STRIPS_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops' 
-    \<and> STRIPS_Semantics.are_all_operator_effects_consistent ops'"
+  shows "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops' 
+    \<and> STRIPS_Prime_Semantics.are_all_operator_effects_consistent ops'"
   using sas_plus_equivalent_to_strips_i_a_VI sas_plus_equivalent_to_strips_i_a_VII assms
   by fastforce
 
@@ -2646,7 +2680,7 @@ proof -
         and ?J' = "execute_parallel_operator ?I' ops'" 
       have nb\<^sub>1: "set ops' \<subseteq> set ((?\<Pi>)\<^sub>\<O>)" 
         using Cons.prems(6)
-        unfolding STRIPS_Semantics.is_parallel_solution_for_problem_def list_all_iff ListMem_iff
+        unfolding STRIPS_Prime_Semantics.is_parallel_solution_for_problem_def list_all_iff ListMem_iff
         by fastforce
       {
         fix op 
@@ -2694,8 +2728,8 @@ proof -
           by fast
       } note nb\<^sub>4 = this
       show ?case 
-        proof (cases "STRIPS_Semantics.are_all_operators_applicable ?I' ops' 
-          \<and> STRIPS_Semantics.are_all_operator_effects_consistent ops'")
+        proof (cases "STRIPS_Prime_Semantics.are_all_operators_applicable ?I' ops' 
+          \<and> STRIPS_Prime_Semantics.are_all_operator_effects_consistent ops'")
           case True
           {
             {
@@ -2826,7 +2860,7 @@ SATPlan; and finally,
 \end{enumerate} \<close>
 lemma sas_plus_equivalent_to_strips_i:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-    and "STRIPS_Semantics.is_parallel_solution_for_problem 
+    and "STRIPS_Prime_Semantics.is_parallel_solution_for_problem 
     (\<phi> \<Psi>) \<pi>"
   shows "goal_of \<Psi> \<subseteq>\<^sub>m execute_parallel_plan_sas_plus 
     (sas_plus_problem.initial_of \<Psi>) (\<phi>\<^sub>P\<inverse> \<Psi> \<pi>)"
@@ -2853,7 +2887,7 @@ proof -
   moreover {
     have "?G' \<subseteq>\<^sub>m execute_parallel_plan ?I' \<pi>"
       using assms(2) 
-      unfolding STRIPS_Semantics.is_parallel_solution_for_problem_def..
+      unfolding STRIPS_Prime_Semantics.is_parallel_solution_for_problem_def..
     moreover have "?G' = \<phi>\<^sub>S \<Psi> ?G" and "?I' = \<phi>\<^sub>S \<Psi> ?I" 
       by simp+
     ultimately have "(\<phi>\<^sub>S \<Psi> ?G) \<subseteq>\<^sub>m execute_parallel_plan (\<phi>\<^sub>S \<Psi> ?I) \<pi>"
@@ -2868,7 +2902,7 @@ qed
 for a given SAS+ problem correspond to operators of the SAS+ problem. \<close>
 lemma sas_plus_equivalent_to_strips_ii:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-    and "STRIPS_Semantics.is_parallel_solution_for_problem (\<phi> \<Psi>) \<pi>"
+    and "STRIPS_Prime_Semantics.is_parallel_solution_for_problem (\<phi> \<Psi>) \<pi>"
   shows "list_all (list_all (\<lambda>op. ListMem op (operators_of \<Psi>))) (\<phi>\<^sub>P\<inverse> \<Psi> \<pi>)" 
 proof -
   let ?\<Pi> = "\<phi> \<Psi>" 
@@ -2912,7 +2946,7 @@ problem. \<close>
 theorem
   sas_plus_equivalent_to_strips:
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "STRIPS_Semantics.is_parallel_solution_for_problem (\<phi> \<Psi>) \<pi>" 
+    and "STRIPS_Prime_Semantics.is_parallel_solution_for_problem (\<phi> \<Psi>) \<pi>" 
   shows "is_parallel_solution_for_problem \<Psi> (\<phi>\<^sub>P\<inverse> \<Psi> \<pi>)"
 proof -
   let ?I = "initial_of \<Psi>"
@@ -3038,8 +3072,8 @@ private lemma strips_equivalent_to_sas_plus_i_a_IV:
     and "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
     and "are_all_operators_applicable_in I ops 
     \<and> are_all_operator_effects_consistent ops"
-  shows "STRIPS_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> I) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]
-    \<and> STRIPS_Semantics.are_all_operator_effects_consistent [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]"
+  shows "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> I) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]
+    \<and> STRIPS_Prime_Semantics.are_all_operator_effects_consistent [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]"
 proof -
   let ?vs = "variables_of \<Psi>" 
     and ?ops = "operators_of \<Psi>" 
@@ -3189,9 +3223,9 @@ proof -
             using state_to_strips_state_range_is[OF assms(1)]
             by simp
         }
-        hence "STRIPS_Representation.is_operator_applicable_in ?I' op'" 
+        hence "STRIPS_Prime_Representation.is_operator_applicable_in ?I' op'" 
           unfolding 
-            STRIPS_Representation.is_operator_applicable_in_def 
+            STRIPS_Prime_Representation.is_operator_applicable_in_def 
             Let_def list_all_iff 
           by fast
       }
@@ -3202,8 +3236,8 @@ proof -
       {
         fix op\<^sub>1' op\<^sub>2'
         assume op\<^sub>1'_in_ops': "op\<^sub>1' \<in> set ?ops'" and op\<^sub>2'_in_ops': "op\<^sub>2' \<in> set ?ops'" 
-        have "STRIPS_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'" 
-          unfolding STRIPS_Semantics.are_operator_effects_consistent_def Let_def
+        have "STRIPS_Prime_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'" 
+          unfolding STRIPS_Prime_Semantics.are_operator_effects_consistent_def Let_def
           \<comment> \<open> TODO proof is symmetrical... refactor into nb. \<close>
           proof (rule conjI)          
             show "\<not>list_ex (\<lambda>x. list_ex ((=) x) (delete_effects_of op\<^sub>2')) 
@@ -3244,8 +3278,8 @@ proof -
               qed
           qed
       }
-      thus "STRIPS_Semantics.are_all_operator_effects_consistent ?ops'" 
-        unfolding STRIPS_Semantics.are_all_operator_effects_consistent_def list_all_iff
+      thus "STRIPS_Prime_Semantics.are_all_operator_effects_consistent ?ops'" 
+        unfolding STRIPS_Prime_Semantics.are_all_operator_effects_consistent_def list_all_iff
         by blast
     qed
 qed
@@ -3255,8 +3289,8 @@ private lemma strips_equivalent_to_sas_plus_i_a_V:
     and "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
     and "\<not>(are_all_operators_applicable_in s ops 
     \<and> are_all_operator_effects_consistent ops)"
-  shows "\<not>(STRIPS_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]
-    \<and> STRIPS_Semantics.are_all_operator_effects_consistent [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops])"
+  shows "\<not>(STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]
+    \<and> STRIPS_Prime_Semantics.are_all_operator_effects_consistent [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops])"
 proof -
   let ?vs = "variables_of \<Psi>"
     and ?ops = "operators_of \<Psi>" 
@@ -3289,8 +3323,8 @@ proof -
       | (B) "\<not>are_all_operator_effects_consistent ops" 
       using assms(3)
       by blast
-    hence "\<not>STRIPS_Semantics.are_all_operators_applicable ?s' ?ops' 
-      \<or> \<not>STRIPS_Semantics.are_all_operator_effects_consistent ?ops'"
+    hence "\<not>STRIPS_Prime_Semantics.are_all_operators_applicable ?s' ?ops' 
+      \<or> \<not>STRIPS_Prime_Semantics.are_all_operator_effects_consistent ?ops'"
       proof (cases)
         case A
         then obtain op where op_in: "op \<in> set ops" 
@@ -3324,7 +3358,7 @@ proof -
               moreover have "?s' (v, a) = Some True"
                 using all_operators_applicable calculation 
                 unfolding are_all_operators_applicable_def 
-                    STRIPS_Representation.is_operator_applicable_in_def 
+                    STRIPS_Prime_Representation.is_operator_applicable_in_def 
                     is_operator_applicable_in_def Let_def list_all_iff 
                 using op'_in
                 by fast
@@ -3411,9 +3445,9 @@ proof -
             (v, a) = (v', a')"
             by fastforce
         }
-        then have "\<not>STRIPS_Semantics.are_all_operator_effects_consistent ?ops'" 
-          unfolding STRIPS_Semantics.are_all_operator_effects_consistent_def 
-            STRIPS_Semantics.are_operator_effects_consistent_def list_all_iff list_ex_iff Let_def 
+        then have "\<not>STRIPS_Prime_Semantics.are_all_operator_effects_consistent ?ops'" 
+          unfolding STRIPS_Prime_Semantics.are_all_operator_effects_consistent_def 
+            STRIPS_Prime_Semantics.are_operator_effects_consistent_def list_all_iff list_ex_iff Let_def 
           by blast
         thus ?thesis 
           by simp 
@@ -3489,8 +3523,8 @@ proof -
           moreover have "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
             using Cons.prems(6)
             by simp
-          moreover have "STRIPS_Semantics.are_all_operators_applicable ?I' ?ops'" 
-            and "STRIPS_Semantics.are_all_operator_effects_consistent ?ops'" 
+          moreover have "STRIPS_Prime_Semantics.are_all_operators_applicable ?I' ?ops'" 
+            and "STRIPS_Prime_Semantics.are_all_operator_effects_consistent ?ops'" 
             using strips_equivalent_to_sas_plus_i_a_IV[OF Cons.prems(1) _ True] calculation
             by blast+
           ultimately have "execute_parallel_plan ?I' ?\<pi> 
@@ -3587,8 +3621,8 @@ proof -
           moreover have "set ?ops' \<subseteq> set (strips_problem.operators_of ?\<Pi>)"
             using strips_equivalent_to_sas_plus_i_a_II(1)[OF assms(1)] Cons.prems(6)
             by auto
-          moreover have "\<not>(STRIPS_Semantics.are_all_operators_applicable ?I' ?ops' 
-            \<and> STRIPS_Semantics.are_all_operator_effects_consistent ?ops')"
+          moreover have "\<not>(STRIPS_Prime_Semantics.are_all_operators_applicable ?I' ?ops' 
+            \<and> STRIPS_Prime_Semantics.are_all_operator_effects_consistent ?ops')"
             using strips_equivalent_to_sas_plus_i_a_V[OF assms(1) _ False] Cons.prems(6)
             by force 
           ultimately have "execute_parallel_plan ?I' ?\<pi> = ?I'"
@@ -3702,7 +3736,7 @@ theorem
   strips_equivalent_to_sas_plus:
   assumes "is_valid_problem_sas_plus \<Psi>"
     and "is_parallel_solution_for_problem \<Psi> \<psi>"
-  shows "STRIPS_Semantics.is_parallel_solution_for_problem (\<phi> \<Psi>) (\<phi>\<^sub>P \<Psi> \<psi>)"
+  shows "STRIPS_Prime_Semantics.is_parallel_solution_for_problem (\<phi> \<Psi>) (\<phi>\<^sub>P \<Psi> \<psi>)"
 proof -
   let ?\<Pi> = "\<phi> \<Psi>"
   let ?I' = "strips_problem.initial_of ?\<Pi>"
@@ -3710,7 +3744,7 @@ proof -
     and ?ops' = "strips_problem.operators_of ?\<Pi>"
     and ?\<pi> = "\<phi>\<^sub>P \<Psi> \<psi>"
   show ?thesis
-    unfolding STRIPS_Semantics.is_parallel_solution_for_problem_def 
+    unfolding STRIPS_Prime_Semantics.is_parallel_solution_for_problem_def 
     proof (rule conjI)
       show "?G' \<subseteq>\<^sub>m execute_parallel_plan ?I' ?\<pi>"
         using strips_equivalent_to_sas_plus_i[OF assms]
@@ -3805,7 +3839,7 @@ theorem
   serial_sas_plus_equivalent_to_serial_strips:
   assumes "is_valid_problem_sas_plus \<Psi>" 
     and "SAS_Plus_Semantics.is_serial_solution_for_problem \<Psi> \<psi>"
-  shows "STRIPS_Semantics.is_serial_solution_for_problem (\<phi> \<Psi>) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> \<psi>]" 
+  shows "STRIPS_Prime_Semantics.is_serial_solution_for_problem (\<phi> \<Psi>) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> \<psi>]" 
 proof -
   let ?\<psi>' = "embed \<psi>"
     and ?\<Pi> = "\<phi> \<Psi>"
@@ -3815,7 +3849,7 @@ proof -
     have "SAS_Plus_Semantics.is_parallel_solution_for_problem \<Psi> ?\<psi>'"
       using execute_serial_plan_sas_plus_is_execute_parallel_plan_sas_plus[OF assms]
       by simp
-    hence "STRIPS_Semantics.is_parallel_solution_for_problem ?\<Pi> ?\<pi>'"
+    hence "STRIPS_Prime_Semantics.is_parallel_solution_for_problem ?\<Pi> ?\<pi>'"
       using strips_equivalent_to_sas_plus[OF assms(1)]
       by simp
   }
@@ -3827,7 +3861,7 @@ proof -
     using serial_sas_plus_equivalent_to_serial_strips_i[of _ \<Psi> \<psi>]
     by metis
   ultimately show ?thesis
-    using STRIPS_Semantics.flattening_lemma[of ?\<Pi>]
+    using STRIPS_Prime_Semantics.flattening_lemma[of ?\<Pi>]
     by metis
 qed
 
@@ -3901,7 +3935,7 @@ transformation and flattening. \<close>
 theorem 
   serial_strips_equivalent_to_serial_sas_plus:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-    and "STRIPS_Semantics.is_serial_solution_for_problem (\<phi> \<Psi>) \<pi>"
+    and "STRIPS_Prime_Semantics.is_serial_solution_for_problem (\<phi> \<Psi>) \<pi>"
   shows "SAS_Plus_Semantics.is_serial_solution_for_problem \<Psi> [\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> \<pi>]" 
 proof -
   let ?\<pi>' = "embed \<pi>"
@@ -3909,7 +3943,7 @@ proof -
   let ?\<psi>' = "\<phi>\<^sub>P\<inverse> \<Psi> ?\<pi>'"
   let ?\<psi> = "concat ?\<psi>'"
   {
-    have "STRIPS_Semantics.is_parallel_solution_for_problem ?\<Pi> ?\<pi>'"
+    have "STRIPS_Prime_Semantics.is_parallel_solution_for_problem ?\<Pi> ?\<pi>'"
       using embedding_lemma[OF 
           is_valid_problem_sas_plus_then_strips_transformation_too[OF assms(1)] assms(2)].
     hence "SAS_Plus_Semantics.is_parallel_solution_for_problem \<Psi> ?\<psi>'"
@@ -3957,7 +3991,7 @@ definition bounded_solution_set_strips'
     \<Rightarrow> nat
     \<Rightarrow> ('variable \<times> 'domain) strips_plan set" 
   where "bounded_solution_set_strips' \<Pi> k
-    \<equiv> { \<pi>. STRIPS_Semantics.is_serial_solution_for_problem \<Pi> \<pi> \<and> length \<pi> = k }"
+    \<equiv> { \<pi>. STRIPS_Prime_Semantics.is_serial_solution_for_problem \<Pi> \<pi> \<and> length \<pi> = k }"
 
 abbreviation bounded_solution_set_strips
   :: "('variable \<times> 'domain) strips_problem 
@@ -4132,7 +4166,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
            using calculation(2)
            unfolding bounded_solution_set_sas_plus'_def 
            by blast
-         moreover have "length \<pi> = k" and "STRIPS_Semantics.is_serial_solution_for_problem ?\<Pi> \<pi>"
+         moreover have "length \<pi> = k" and "STRIPS_Prime_Semantics.is_serial_solution_for_problem ?\<Pi> \<pi>"
            subgoal 
              using calculation(4, 6) by auto
            subgoal
@@ -4151,7 +4185,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
          moreover obtain \<pi> where "\<pi> \<in> ?Sol\<^sub>k'" and "\<pi> \<notin> ?\<phi>\<^sub>P ` ?Sol\<^sub>k"
            using calculation
            by blast
-         moreover have "STRIPS_Semantics.is_serial_solution_for_problem ?\<Pi> \<pi>"
+         moreover have "STRIPS_Prime_Semantics.is_serial_solution_for_problem ?\<Pi> \<pi>"
            and "length \<pi> = k"
            using calculation(2)
            unfolding bounded_solution_set_strips'_def 
@@ -4176,7 +4210,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
          moreover {
            have "\<forall>op \<in> set \<pi>. op \<in> set ((?\<Pi>)\<^sub>\<O>)"
              using calculation(4)
-             unfolding STRIPS_Semantics.is_serial_solution_for_problem_def list_all_iff ListMem_iff
+             unfolding STRIPS_Prime_Semantics.is_serial_solution_for_problem_def list_all_iff ListMem_iff
              by simp
            hence "?\<phi>\<^sub>P [\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> \<pi>] = \<pi>" 
              proof (induction \<pi>)
@@ -4316,7 +4350,7 @@ proof -
     assume "\<pi> \<in> ?Sol\<^sub>k"
     then have "length \<pi> = k" and "set \<pi> \<subseteq> ?Ops"
       unfolding bounded_solution_set_strips'_def 
-        STRIPS_Semantics.is_serial_solution_for_problem_def Let_def list_all_iff ListMem_iff
+        STRIPS_Prime_Semantics.is_serial_solution_for_problem_def Let_def list_all_iff ListMem_iff
       by fastforce+
     hence "\<pi> \<in> ?P\<^sub>k" 
       by blast
