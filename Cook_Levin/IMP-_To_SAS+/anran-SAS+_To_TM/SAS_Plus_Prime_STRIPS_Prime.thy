@@ -16,39 +16,13 @@ subsection "Translation of SAS+ Problems to STRIPS Problems"
 (* Since a variable can have infinitely many values, the type should be set here. *)
 definition possible_assignments_for 
   :: "('variable, 'domain) sas_plus_problem \<Rightarrow> 'variable \<Rightarrow> ('variable \<times> 'domain) set" 
-  where "possible_assignments_for \<Psi> v \<equiv> {(v, a). a \<in> the (range_of \<Psi> v)}"
+   where "possible_assignments_for \<Psi> v \<equiv> {(v, a)| a. a \<in> the (range_of \<Psi> v)}"  
+  (* where "possible_assignments_for \<Psi> v \<equiv> {(v, a). a \<in> the (range_of \<Psi> v)}"   *)
 
 definition all_possible_assignments_for
   :: "('variable, 'domain) sas_plus_problem \<Rightarrow> ('variable \<times> 'domain) set"
   where "all_possible_assignments_for \<Psi> \<equiv> \<Union> (possible_assignments_for \<Psi> ` (set ( variables_of \<Psi>)))" 
 
-definition elem_from_set :: "'a set \<Rightarrow> 'a" where
-"
-  elem_from_set s = Finite_Set.fold (\<lambda>x. \<lambda>y. x) (undefined) s
-"
-(* elem_from_set s = (THE x. x\<in>s) *)
-(* elem_from_set s = Finite_Set.fold (\<lambda>x. \<lambda>y. x) (undefined) s *)
-lemma "elem_from_set {True} = True " 
-  apply (auto simp: elem_from_set_def Finite_Set.fold_def)
-  by (smt (z3) fold_graph.cases fold_graph.emptyI fold_graph.insertI insertCI singletonD the_equality) 
-
-definition elem_from_list :: "'a list \<Rightarrow> 'a" where 
-"
-  elem_from_list l = fold (\<lambda>x. \<lambda>y. x) l (undefined) 
-"
-lemma "elem_from_list [True, False] = False " 
-  by (auto simp: elem_from_list_def)
-
-(* In this way we avoid using existential quantifier, but the use of THE might be involved depending on the definition of elem_from_set*)
-definition map_of_set :: "('a \<times> 'b) set \<Rightarrow> 'a \<rightharpoonup> 'b" where
-"
-  map_of_set s = (\<lambda>x. (if (x,undefined) \<notin> s then None else (Some (snd (elem_from_set {(a,b). a=x})))))
-"
-(* alternative:
-  (let first = {x. (\<exists>y. (x,y)\<in>s)}; second = \<lambda>x. {y. \<exists>y.(x,y)\<in>s} in (\<lambda>x. if x\<notin>first then None else (Some (elem_from_set (second x)))))
- *)
-
-(* Use elem_from_set; use `` *)
 definition state_to_strips_state
   :: "('variable, 'domain) sas_plus_problem 
     \<Rightarrow> ('variable, 'domain) state 
@@ -73,7 +47,7 @@ definition sasp_op_to_strips
   where "sasp_op_to_strips \<Psi> op \<equiv> let
       pre = precondition_of op 
       ; add = effect_of op
-      ; delete = {(v, a'). \<exists>(v, a) \<in> set (effect_of op). a' \<in> Set.filter ((\<noteq>) a) (the (range_of \<Psi> v))}
+      ; delete = {(v, a')|v a a'. (v, a) \<in> set (effect_of op) \<and> a' \<in> Set.filter ((\<noteq>) a) (the (range_of \<Psi> v))}
     in STRIPS_Prime_Representation.operator_for pre add delete"
 (* A sas+ operator assigns a variable to a singular value, so in STRIPS only the corresponding pair is true. 
    This means that "delete" should make all other values false, but since we have a set of possible values, this has to be a set. *)
@@ -163,7 +137,7 @@ lemma[simp]:
     = (let
       pre = precondition_of op
       ; add = effect_of op
-      ; delete = {(v, a'). \<exists>(v, a) \<in> set (effect_of op). a' \<in> Set.filter ((\<noteq>) a) (the (range_of \<Psi> v))}
+      ; delete = {(v, a')| v a a'. (v, a) \<in> set (effect_of op) \<and> a' \<in> Set.filter ((\<noteq>) a) (the (range_of \<Psi> v))}
     in STRIPS_Prime_Representation.operator_for pre add delete)" 
   and "(\<phi>\<^sub>P \<Psi> \<psi>) = [[\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]. ops \<leftarrow> \<psi>]"
   and "(\<phi>\<^sub>S\<inverse> \<Psi> s')= map_of_set (Set.filter (\<lambda>(v, a). s' (v, a) = Some True) 
@@ -209,21 +183,21 @@ proof -
     by auto
   thus  ?thesis 
     unfolding possible_assignments_for_def
-    by fastforce
+    by force
 qed
 
 lemma all_possible_assignments_for_set_is:
   assumes "\<forall>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). range_of \<Psi> v \<noteq> None" 
-  shows "set (all_possible_assignments_for \<Psi>)
+  shows " (all_possible_assignments_for \<Psi>)
     = (\<Union>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). { (v, a) | a. a \<in> \<R>\<^sub>+ \<Psi> v })" 
 proof -
   let ?vs = "variables_of \<Psi>"
-  have "set (all_possible_assignments_for \<Psi>) = 
-    (\<Union>(set ` (\<lambda>v. map (\<lambda>(v, a). (v, a)) (possible_assignments_for \<Psi> v)) ` set ?vs))"
+  have " (all_possible_assignments_for \<Psi>) = 
+    (\<Union>((\<lambda>v. (\<lambda>(v, a). (v, a))` (possible_assignments_for \<Psi> v)) ` set  ?vs))"
     unfolding all_possible_assignments_for_def set_concat
     using set_map 
     by auto
-  also have "\<dots> = (\<Union>((\<lambda>v. set (possible_assignments_for \<Psi> v)) ` set ?vs))"
+  also have "\<dots> = (\<Union>((\<lambda>v.  (possible_assignments_for \<Psi> v)) ` set ?vs))"
     using image_comp set_map
     by simp
   (* TODO slow *)
@@ -236,34 +210,39 @@ qed
 
 lemma state_to_strips_state_dom_is_i[simp]:
   assumes "\<forall>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). v \<in> dom (sas_plus_problem.range_of \<Psi>)"
-  shows "set (concat 
-      [possible_assignments_for \<Psi> v. v \<leftarrow> filter (\<lambda>v. s v \<noteq> None) (variables_of \<Psi>)])
+  shows "\<Union> {possible_assignments_for \<Psi> v |v. ListMem v (filter (\<lambda>v. s v \<noteq> None) (variables_of \<Psi>))}
     = (\<Union>v \<in> { v | v. v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> s v \<noteq> None }. 
       { (v, a) | a. a \<in> \<R>\<^sub>+ \<Psi> v })" 
 proof -
   let ?vs = "variables_of \<Psi>"
   let ?defined = "filter (\<lambda>v. s v \<noteq> None) ?vs"
-  let ?l = "concat [possible_assignments_for \<Psi> v. v \<leftarrow> ?defined]"
+  let ?l = "\<Union>{possible_assignments_for \<Psi> v |v. (ListMem v ?defined)}"
   have nb: "set ?defined = { v | v. v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> s v \<noteq> None }" 
     unfolding set_filter
     by force
-  have "set ?l = \<Union>(set ` set (map (possible_assignments_for \<Psi>) ?defined ))" 
+  have "?l = \<Union>( set (map (possible_assignments_for \<Psi>) ?defined ))" 
     unfolding set_concat image_Union
-    by blast
-  also have "\<dots> = \<Union>(set ` (possible_assignments_for \<Psi>) ` set ?defined)" 
+    by (smt (z3) Collect_cong ListMem_iff list.set_map mem_Collect_eq set_filter setcompr_eq_image)
+(*   also have "\<dots> = \<Union>( (possible_assignments_for \<Psi>) ` set ?defined)" 
     unfolding set_map
-    by blast
-  also have "\<dots> = (\<Union>v \<in> set ?defined. set (possible_assignments_for \<Psi> v))"
-    by blast
+    by blast *)
+  also have "\<dots> = (\<Union>v \<in> set ?defined.  (possible_assignments_for \<Psi> v))"try
+    by simp   
   also have "\<dots> = (\<Union>v \<in> { v | v. v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> s v \<noteq> None }.
-    set (possible_assignments_for \<Psi> v))"
+     (possible_assignments_for \<Psi> v))"
     using nb 
     by argo
   finally show ?thesis
     using possible_assignments_for_set_is 
-      is_valid_problem_sas_plus_dom_sas_plus_problem_range_of assms(1)
-    by fastforce
+      is_valid_problem_sas_plus_dom_sas_plus_problem_range_of assms(1) 
+    by force
 qed
+
+(* HERE! *)
+lemma dom_map_of_set_conv_image_fst:
+  "dom (map_of_set xys) = fst ` xys"
+  unfolding map_of_set_def
+  by (smt (verit) Collect_cong domI dom_def image_def mem_Collect_eq)
 
 lemma state_to_strips_state_dom_is:
   \<comment> \<open> NOTE A transformed state is defined on all possible assignments for all variables defined 
@@ -274,19 +253,18 @@ in the original state. \<close>
       { (v, a) | a. a \<in> \<R>\<^sub>+ \<Psi> v })"
 proof -
   let ?vs = "variables_of \<Psi>"
-  let ?l = "concat [possible_assignments_for \<Psi> v. v \<leftarrow> filter (\<lambda>v. s v \<noteq> None) ?vs]"
+  let ?l = "\<Union> {possible_assignments_for \<Psi> v|v. ListMem v (filter (\<lambda>v. s v \<noteq> None) ?vs)}"
   have nb: "\<forall>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). v \<in> dom (sas_plus_problem.range_of \<Psi>)"
     using is_valid_problem_sas_plus_dom_sas_plus_problem_range_of assms(1)
     by fastforce
-  have "dom (\<phi>\<^sub>S \<Psi> s) = fst ` set (map (\<lambda>(v, a). ((v, a), the (s v) = a)) ?l)" 
-    unfolding state_to_strips_state_def 
-      SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def 
-    using dom_map_of_conv_image_fst[of "map (\<lambda>(v, a). ((v, a), the (s v) = a)) ?l"]
-    by presburger
-  also have "\<dots> = fst ` (\<lambda>(v, a). ((v, a), the (s v) = a)) ` set ?l" 
+  have "dom (\<phi>\<^sub>S \<Psi> s) = fst `  ( (\<lambda>(v, a). ((v, a), the (s v) = a)) ` ?l)" 
+    unfolding SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def 
+    using dom_map_of_set_conv_image_fst[of " (\<lambda>(v, a). ((v, a), the (s v) = a)) ` ?l"]
+    by (smt (z3) Collect_cong ListMem_iff image_def)
+(*   also have "\<dots> = fst ` (\<lambda>(v, a). ((v, a), the (s v) = a)) ` ?l" 
     unfolding set_map
-    by blast
-  also have "\<dots> = (\<lambda>(v, a). fst  ((v, a), the (s v) = a)) ` set ?l"
+    by blast *)
+  also have "\<dots> = (\<lambda>(v, a). fst  ((v, a), the (s v) = a)) `  ?l"
     unfolding image_comp[of fst "\<lambda>(v, a). ((v, a), the (s v) = a)"] comp_apply[of 
         fst "\<lambda>(v, a). ((v, a), the (s v) = a)"] prod.case_distrib
     by blast
@@ -331,6 +309,17 @@ proof -
     qed
 qed
 
+(* HERE! *)
+lemma map_of_set_from_function_graph_is_some_if:
+  fixes f :: "'a \<Rightarrow> 'b"
+  assumes " xs \<noteq> {}"
+   and "x \<in>  xs"
+  shows "(map_of_set ( (\<lambda>x. (x, f x))` xs)) x = Some (f x)"  
+  using assms 
+  unfolding map_of_set_def elem_from_set_def image_def Finite_Set.fold_def
+  apply (auto simp add:elem_from_set_def)  
+  by (smt (verit, ccfv_threshold) empty_iff fold_graph.simps insertE insertI1 prod.sel(2) the_equality)
+    
 lemma state_to_strips_state_range_is:
   assumes "is_valid_problem_sas_plus \<Psi>" 
     and "(v, a) \<in> dom (\<phi>\<^sub>S \<Psi> s)" 
@@ -339,7 +328,7 @@ proof -
   let ?vs = "variables_of \<Psi>" 
   let ?s' = "\<phi>\<^sub>S \<Psi> s"
     and ?defined = "filter (\<lambda>v. s v \<noteq> None) ?vs"
-  let ?l = "concat [possible_assignments_for \<Psi> v. v \<leftarrow> ?defined]"
+  let ?l = "\<Union> {possible_assignments_for \<Psi> v |v. ListMem v ?defined}"
   have v_in_set_vs: "v \<in> set ?vs" 
     and s_of_v_is_not_None: "s v \<noteq> None" 
     and a_in_range_of_v: "a \<in> \<R>\<^sub>+ \<Psi> v" 
@@ -351,20 +340,21 @@ proof -
       using assms(1) is_valid_problem_sas_plus_then(1)
       unfolding is_valid_problem_sas_plus_def
       by fastforce
-    moreover have "(v, a) \<in> set ?l" 
+    moreover have "(v, a) \<in>  ?l" 
       unfolding state_to_strips_state_dom_is_i[OF calculation(1)]
       using s_of_v_is_not_None a_in_range_of_v v_in_set_vs
       by fastforce
-    moreover have "set ?l \<noteq> {}" 
+    moreover have " ?l \<noteq> {}" 
       using calculation
       by fastforce
     \<comment> \<open> TODO slow. \<close>
     ultimately have "(\<phi>\<^sub>S \<Psi> s) (v, a) = Some (the (s v) = a)"
-      using map_of_from_function_graph_is_some_if[of 
+      using map_of_set_from_function_graph_is_some_if[of 
           ?l "(v, a)" "\<lambda>(v, a). the (s v) = a"] 
       unfolding SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def
         state_to_strips_state_def Let_def case_prod_beta'
-      by fastforce
+      apply auto
+      by (smt (z3) Collect_cong ListMem_iff image_def set_filter)
   }
   thus ?thesis.
 qed
@@ -394,69 +384,61 @@ qed
 
 lemma sasp_op_to_strips_set_delete_effects_is:
   assumes "is_valid_operator_sas_plus \<Psi> op" 
-  shows "set (strips_operator.delete_effects_of (\<phi>\<^sub>O \<Psi> op)) 
+  shows " (strips_operator.delete_effects_of (\<phi>\<^sub>O \<Psi> op)) 
     = (\<Union>(v, a) \<in> set (effect_of op). { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })"
 proof -
   let ?D = "range_of \<Psi>"
     and ?effect = "effect_of op" 
-  let ?delete = "[(v, a'). (v, a) \<leftarrow> ?effect, a' \<leftarrow> filter ((\<noteq>) a) (the (?D v))]"
+  let ?delete = "{(v, a')|v a a'. ListMem (v, a) ?effect \<and> a' \<in> the (?D v) \<and> a'\<noteq> a}"
   {
     fix v a
     assume "(v, a) \<in> set ?effect"
-    then have "(\<R>\<^sub>+ \<Psi> v) = set (the (?D v))"
+    then have "(\<R>\<^sub>+ \<Psi> v) =  (the (?D v))"
       using assms 
       using is_valid_operator_sas_plus_then_range_of_sas_plus_op_is_set_range_of_op
       by fastforce
-    hence "set (filter ((\<noteq>) a) (the (?D v))) = { a' \<in> \<R>\<^sub>+ \<Psi> v. a' \<noteq> a }"
+    hence "{a'|a'. a'\<in>the (?D v) \<and> a'\<noteq> a} = { a' \<in> \<R>\<^sub>+ \<Psi> v. a' \<noteq> a }"
       unfolding set_filter 
       by blast
   } note nb = this
   {
-    \<comment> \<open> TODO slow. \<close>
-    have "set ?delete = \<Union>(set ` (\<lambda>(v, a). map (Pair v) (filter ((\<noteq>) a) (the (?D v)))) 
-      ` (set ?effect))" 
-      using set_concat
-      by simp
-    also have "\<dots> = \<Union>((\<lambda>(v, a). Pair v ` set (filter ((\<noteq>) a) (the (?D v)))) 
-      ` (set ?effect))"
-      unfolding image_comp[of set] set_map 
-      by auto
-    \<comment> \<open> TODO slow. \<close>
-    also have "\<dots> = (\<Union>(v, a) \<in> set ?effect. Pair v ` { a' \<in> \<R>\<^sub>+ \<Psi> v. a' \<noteq> a })" 
-      using nb 
-      by fast
-    finally have "set ?delete = (\<Union>(v, a) \<in> set ?effect.
-      { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })" 
-      by blast
+    have " ?delete = (\<Union>(v, a) \<in> set ?effect.
+      { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })"
+      apply auto
+       apply (smt (z3) ListMem_iff assms case_prodD is_valid_operator_sas_plus_then(4) mem_Collect_eq mem_case_prodI option.case_eq_if range_of_not_empty)
+      by (metis ListMem_iff equals0D option.case_eq_if)
   }
   thus ?thesis
     unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
-      sasp_op_to_strips_def Let_def
-    by force 
+      sasp_op_to_strips_def Let_def 
+    apply auto 
+    using assms is_valid_operator_sas_plus_then_range_of_sas_plus_op_is_set_range_of_op 
+    apply fastforce
+    by fastforce    
 qed
 
 lemma sas_plus_problem_to_strips_problem_variable_set_is:
   \<comment> \<open> The variable set of \<open>\<Pi>\<close> is the set of all possible 
 assignments that are possible using the variables of \<open>\<V>\<close> and the corresponding domains. \<close>
   assumes "is_valid_problem_sas_plus \<Psi>" 
-  shows "set ((\<phi> \<Psi>)\<^sub>\<V>) = (\<Union>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). { (v, a) | a. a \<in> \<R>\<^sub>+ \<Psi> v })"
+  shows " ((\<phi> \<Psi>)\<^sub>\<V>) = (\<Union>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). { (v, a) | a. a \<in> \<R>\<^sub>+ \<Psi> v })"
 proof -
   let ?\<Pi> = "\<phi> \<Psi>"
     and ?vs = "variables_of \<Psi>"
   {
-    have "set (strips_problem.variables_of ?\<Pi>) 
-      = set [as. v \<leftarrow> ?vs, as \<leftarrow> possible_assignments_for \<Psi> v]"
+    have " (strips_problem.variables_of ?\<Pi>) 
+      = {as|v as. ListMem v ?vs \<and> as \<in> possible_assignments_for \<Psi> v}"
       unfolding sas_plus_problem_to_strips_problem_def 
         SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def
       by force
-    also have "\<dots> = (\<Union>(set ` (\<lambda>v. possible_assignments_for \<Psi> v) ` set ?vs))" 
+    also have "\<dots> = (\<Union>( (\<lambda>v. possible_assignments_for \<Psi> v) ` set ?vs))" 
       using set_concat
-      by auto
-    also have "\<dots> = (\<Union>((set \<circ> possible_assignments_for \<Psi>) ` set ?vs))" 
+      by (smt (verit, ccfv_threshold) Collect_cong ListMem_iff Sup_set_def UN_iff mem_Collect_eq)
+    (* also have "\<dots> = (\<Union>(( possible_assignments_for \<Psi>) ` set ?vs))" 
       using image_comp[of set "\<lambda>v. possible_assignments_for \<Psi> v" "set ?vs"]
-      by argo
-    finally have "set (strips_problem.variables_of ?\<Pi>) 
-      = (\<Union>v \<in> set ?vs. set (possible_assignments_for \<Psi> v))"
+      by argo *)
+    finally have " (strips_problem.variables_of ?\<Pi>) 
+      = (\<Union>v \<in> set ?vs.  (possible_assignments_for \<Psi> v))"
       unfolding o_apply
       by blast
   }
@@ -470,28 +452,28 @@ qed
 
 corollary sas_plus_problem_to_strips_problem_variable_set_element_iff:
   assumes "is_valid_problem_sas_plus \<Psi>"
-  shows "(v, a) \<in> set ((\<phi> \<Psi>)\<^sub>\<V>)  \<longleftrightarrow> v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> a \<in> \<R>\<^sub>+ \<Psi> v"
+  shows "(v, a) \<in>  ((\<phi> \<Psi>)\<^sub>\<V>)  \<longleftrightarrow> v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> a \<in> \<R>\<^sub>+ \<Psi> v"
   unfolding sas_plus_problem_to_strips_problem_variable_set_is[OF assms]
   by fast
 
 lemma sasp_op_to_strips_effect_consistent:
   assumes "op = \<phi>\<^sub>O \<Psi> op'" 
-    and "op' \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    and "op' \<in>  ((\<Psi>)\<^sub>\<O>\<^sub>+)"
     and "is_valid_operator_sas_plus \<Psi> op'"
-  shows "(v, a) \<in> set (add_effects_of op) \<longrightarrow> (v, a) \<notin> set (delete_effects_of op)"
-    and "(v, a) \<in> set (delete_effects_of op) \<longrightarrow> (v, a) \<notin> set (add_effects_of op)"
+  shows "(v, a) \<in> set (add_effects_of op) \<longrightarrow> (v, a) \<notin>  (delete_effects_of op)"
+    and "(v, a) \<in>  (delete_effects_of op) \<longrightarrow> (v, a) \<notin> set (add_effects_of op)"
 proof -
   have nb: "(\<forall>(v, a) \<in> set (effect_of op'). \<forall>(v', a') \<in> set (effect_of op'). v \<noteq> v' \<or> a = a')" 
     using assms(3)
     unfolding is_valid_operator_sas_plus_def 
-      SAS_Plus_Representation.is_valid_operator_sas_plus_def list_all_iff ListMem_iff Let_def
+      SAS_Plus_Prime_Representation.is_valid_operator_sas_plus_def list_all_iff ListMem_iff Let_def
     by argo
   {
     fix v a
     assume v_a_in_add_effects_of_op: "(v, a) \<in> set (add_effects_of op)" 
-    have "(v, a) \<notin> set (delete_effects_of op)" 
+    have "(v, a) \<notin>  (delete_effects_of op)" 
       proof (rule ccontr)
-        assume "\<not>(v, a) \<notin> set (delete_effects_of op)" 
+        assume "\<not>(v, a) \<notin>  (delete_effects_of op)" 
         moreover have "(v, a) \<in> 
           (\<Union>(v, a') \<in> set (effect_of op'). { (v, a'') 
             | a''. a'' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a'' \<noteq> a' })"
@@ -520,7 +502,7 @@ proof -
   }
   moreover {
     fix v a
-    assume v_a_in_delete_effects_of_op: "(v, a) \<in> set (delete_effects_of op)" 
+    assume v_a_in_delete_effects_of_op: "(v, a) \<in>  (delete_effects_of op)" 
     have "(v, a) \<notin> set (add_effects_of op)" 
       proof (rule ccontr)
         assume "\<not>(v, a) \<notin> set (add_effects_of op)" 
@@ -553,26 +535,25 @@ proof -
       qed
     }
     ultimately show "(v, a) \<in> set (add_effects_of op) 
-      \<longrightarrow> (v, a) \<notin> set (delete_effects_of op)"
-      and "(v, a) \<in> set (delete_effects_of op) 
+      \<longrightarrow> (v, a) \<notin>  (delete_effects_of op)"
+      and "(v, a) \<in>  (delete_effects_of op) 
       \<longrightarrow> (v, a) \<notin> set (add_effects_of op)"
       by blast+
   qed
 
 lemma is_valid_problem_sas_plus_then_strips_transformation_too_iii:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-  shows "list_all (is_valid_operator_strips (\<phi> \<Psi>))
-    (strips_problem.operators_of (\<phi> \<Psi>))"
+  shows "Ball (strips_problem.operators_of (\<phi> \<Psi>)) (is_valid_operator_strips (\<phi> \<Psi>))"
 proof -
   let ?\<Pi> = "\<phi> \<Psi>"
   let ?vs = "strips_problem.variables_of ?\<Pi>"
   {
     fix op
-    assume "op \<in> set (strips_problem.operators_of ?\<Pi>)" 
+    assume "op \<in>  (strips_problem.operators_of ?\<Pi>)" 
     \<comment> \<open> TODO slow. \<close>
     then obtain op' 
       where op_is: "op = \<phi>\<^sub>O \<Psi> op'" 
-        and op'_in_operators: "op' \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+        and op'_in_operators: "op' \<in>  ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
       unfolding SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def
         sas_plus_problem_to_strips_problem_def 
         sasp_op_to_strips_def 
@@ -597,7 +578,7 @@ proof -
         using is_valid_op' calculation(1)
         using is_valid_operator_sas_plus_then(2) 
         by fast
-      ultimately have "(v, a) \<in> set ?vs" 
+      ultimately have "(v, a) \<in>  ?vs" 
         using sas_plus_problem_to_strips_problem_variable_set_element_iff[OF assms(1)]
         by force
     }
@@ -612,14 +593,14 @@ proof -
       then have "v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+)" and "a \<in> \<R>\<^sub>+ \<Psi> v" 
         using is_valid_operator_sas_plus_then is_valid_op'
         by fastforce+
-      hence "(v, a) \<in> set ?vs" 
+      hence "(v, a) \<in> ?vs" 
         using sas_plus_problem_to_strips_problem_variable_set_element_iff[OF assms(1)]
         by force
     }
     moreover {
       fix v a'
-      assume v_a'_in_delete_effects: "(v, a') \<in> set (strips_operator.delete_effects_of op)"
-      moreover have "set (strips_operator.delete_effects_of op) 
+      assume v_a'_in_delete_effects: "(v, a') \<in>  (strips_operator.delete_effects_of op)"
+      moreover have " (strips_operator.delete_effects_of op) 
         =  (\<Union>(v, a) \<in> set (effect_of op'). 
           { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })"
         using sasp_op_to_strips_set_delete_effects_is[OF is_valid_op']
@@ -640,18 +621,18 @@ proof -
       moreover have "a' \<in> \<R>\<^sub>+ \<Psi> v"
         using a'_in 
         by blast
-      ultimately have "(v, a') \<in> set ?vs" 
+      ultimately have "(v, a') \<in>  ?vs" 
         using sas_plus_problem_to_strips_problem_variable_set_element_iff[OF assms(1)]
         by force
     }
-    ultimately have "set (strips_operator.precondition_of op) \<subseteq> set ?vs
-      \<and> set (strips_operator.add_effects_of op) \<subseteq> set ?vs
-      \<and> set (strips_operator.delete_effects_of op) \<subseteq> set ?vs
-      \<and> (\<forall>v\<in>set (add_effects_of op). v \<notin> set (delete_effects_of op))
-      \<and> (\<forall>v\<in>set (delete_effects_of op). v \<notin> set (add_effects_of op))"
+    ultimately have "set (strips_operator.precondition_of op) \<subseteq>  ?vs
+      \<and> set (strips_operator.add_effects_of op) \<subseteq>  ?vs
+      \<and>  (strips_operator.delete_effects_of op) \<subseteq>  ?vs
+      \<and> (\<forall>v\<in>set (add_effects_of op). v \<notin>  (delete_effects_of op))
+      \<and> (\<forall>v\<in> (delete_effects_of op). v \<notin> set (add_effects_of op))"
       using sasp_op_to_strips_effect_consistent[OF 
-          op_is op'_in_operators is_valid_op']
-      by fast+
+          op_is op'_in_operators is_valid_op'] 
+      by auto
   }
   thus ?thesis
     unfolding is_valid_operator_strips_def STRIPS_Prime_Representation.is_valid_operator_strips_def 
@@ -662,7 +643,7 @@ qed
 lemma is_valid_problem_sas_plus_then_strips_transformation_too_iv:
   assumes "is_valid_problem_sas_plus \<Psi>"
   shows "\<forall>x. ((\<phi> \<Psi>)\<^sub>I) x \<noteq> None
-    \<longleftrightarrow> ListMem x (strips_problem.variables_of (\<phi> \<Psi>))"
+    \<longleftrightarrow>  x \<in> (strips_problem.variables_of (\<phi> \<Psi>))"
 proof -
   let ?vs = "variables_of \<Psi>"
     and ?I = "initial_of \<Psi>"
@@ -671,7 +652,7 @@ proof -
     and ?I' = "strips_problem.initial_of ?\<Pi>"
   {
     fix x
-    have "?I' x \<noteq> None \<longleftrightarrow> ListMem x ?vs'" 
+    have "?I' x \<noteq> None \<longleftrightarrow>  x \<in> ?vs'" 
       proof (rule iffI)
         assume I'_of_x_is_not_None: "?I' x \<noteq> None"
         then have "x \<in> dom ?I'" 
@@ -689,16 +670,15 @@ proof -
             state_to_strips_state_def
             SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def 
           by simp+
-        thus "ListMem x ?vs'"
-          unfolding ListMem_iff
+        thus "x \<in> ?vs'"
           using sas_plus_problem_to_strips_problem_variable_set_element_iff[OF assms(1)] 
             x_is
           by auto
       next 
-        assume list_mem_x_vs': "ListMem x ?vs'"
+        assume list_mem_x_vs': "x \<in> ?vs'"
         then obtain v a where x_is: "x = (v, a)" 
           by fastforce
-        then have "(v, a) \<in> set ?vs'" 
+        then have "(v, a) \<in> ?vs'" 
           using list_mem_x_vs'
           unfolding ListMem_iff
           by blast
@@ -727,7 +707,7 @@ qed
 private lemma is_valid_problem_sas_plus_then_strips_transformation_too_v:
   assumes "is_valid_problem_sas_plus \<Psi>"
   shows "\<forall>x. ((\<phi> \<Psi>)\<^sub>G) x \<noteq> None
-    \<longrightarrow> ListMem x (strips_problem.variables_of (\<phi> \<Psi>))"
+    \<longrightarrow> x \<in> (strips_problem.variables_of (\<phi> \<Psi>))"
 proof -
   let ?vs = "variables_of \<Psi>"
     and ?D = "range_of \<Psi>"
@@ -748,7 +728,7 @@ proof -
     moreover have "v \<in> set ?vs" and "a \<in> \<R>\<^sub>+ \<Psi> v"
       using state_to_strips_state_dom_is[OF assms(1), of ?G] nb calculation(3)
       by auto+
-    ultimately have "x \<in> set ?vs'"
+    ultimately have "x \<in>  ?vs'"
       using sas_plus_problem_to_strips_problem_variable_set_element_iff[OF assms(1)]
       by auto
   }
@@ -775,14 +755,13 @@ theorem
   shows "is_valid_problem_strips (\<phi> \<Psi>)" 
 proof -
   let ?\<Pi> = "\<phi> \<Psi>"
-  have "list_all (is_valid_operator_strips (\<phi> \<Psi>))
-   (strips_problem.operators_of (\<phi> \<Psi>))" 
+  have "Ball (strips_problem.operators_of (\<phi> \<Psi>)) (is_valid_operator_strips (\<phi> \<Psi>))" 
     using is_valid_problem_sas_plus_then_strips_transformation_too_iii[OF assms].
   moreover have "\<forall>x. (((\<phi> \<Psi>)\<^sub>I) x \<noteq> None) =
-    ListMem x (strips_problem.variables_of (\<phi> \<Psi>))" 
+     (x \<in> (strips_problem.variables_of (\<phi> \<Psi>)))" 
     using is_valid_problem_sas_plus_then_strips_transformation_too_iv[OF assms].
   moreover have "\<forall>x. ((\<phi> \<Psi>)\<^sub>G) x \<noteq> None \<longrightarrow>
-    ListMem x (strips_problem.variables_of (\<phi> \<Psi>))" 
+     x \<in> (strips_problem.variables_of (\<phi> \<Psi>))" 
     using is_valid_problem_sas_plus_then_strips_transformation_too_v[OF assms].
   ultimately show ?thesis 
     using is_valid_problem_strips_def 
@@ -792,40 +771,19 @@ qed
 
 lemma set_filter_all_possible_assignments_true_is:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-  shows "set (filter (\<lambda>(v, a). s (v, a) = Some True) 
+  shows " (Set.filter (\<lambda>(v, a). s (v, a) = Some True) 
       (all_possible_assignments_for \<Psi>))
     =  (\<Union>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). Pair v ` { a \<in> \<R>\<^sub>+ \<Psi> v. s (v, a) = Some True })"
 proof -
   let ?vs = "sas_plus_problem.variables_of \<Psi>"
     and ?P = "(\<lambda>(v, a). s (v, a) = Some True)"
-  let ?l = "filter ?P (all_possible_assignments_for \<Psi>)"
-  have "set ?l = set (concat (map (filter ?P) (map (possible_assignments_for \<Psi>) ?vs)))" 
-    unfolding all_possible_assignments_for_def
-      filter_concat[of ?P "map (possible_assignments_for \<Psi>) (sas_plus_problem.variables_of \<Psi>)"]
-    by simp
-  also have "\<dots> = set (concat (map (\<lambda>v. filter ?P (possible_assignments_for \<Psi> v)) ?vs))" 
-    unfolding map_map comp_apply 
-    by blast
-  also have "\<dots> = set (concat (map (\<lambda>v. map (Pair v) 
-    (filter (?P \<circ> Pair v) (the (range_of \<Psi> v)))) ?vs))" 
-    unfolding possible_assignments_for_def filter_map
-    by blast
-  also have "\<dots> = set (concat (map (\<lambda>v. map (Pair v) (filter (\<lambda>a. s (v, a) = Some True) 
-    (the (range_of \<Psi> v)))) ?vs))" 
-    unfolding comp_apply
-    by fast
-  also have "\<dots> = \<Union>(set ` ((\<lambda>v. map (Pair v) (filter (\<lambda>a. s (v, a) = Some True) 
-    (the (range_of \<Psi> v)))) ` set ?vs))"
-    unfolding set_concat set_map..
-  also have "\<dots> = (\<Union>v \<in> set ?vs. Pair v ` set (filter (\<lambda>a. s (v, a) = Some True) 
-    (the (range_of \<Psi> v))))" 
-    unfolding image_comp[of set] comp_apply set_map..
-  also have "\<dots> = (\<Union>v \<in> set ?vs. Pair v 
-    ` { a \<in> set (the (range_of \<Psi> v)). s (v, a) = Some True })"
-    unfolding set_filter..
-  finally show ?thesis 
-    using set_the_range_of_is_range_of_sas_plus_if[OF assms(1)]
-    by auto
+  let ?l = "Set.filter ?P (all_possible_assignments_for \<Psi>)"
+  show ?thesis 
+    using set_the_range_of_is_range_of_sas_plus_if[OF assms(1)] 
+    apply auto
+    using all_possible_assignments_for_set_is assms sublocale_sas_plus_finite_domain_representation_ii(1) 
+     apply fastforce
+    by (simp add: possible_assignments_for_def all_possible_assignments_for_def)
 qed
 
 lemma strips_state_to_state_dom_is: 
@@ -837,9 +795,9 @@ proof -
   let ?vs = "variables_of \<Psi>"
     and ?s' = "\<phi>\<^sub>S\<inverse> \<Psi> s" 
     and ?P = "(\<lambda>(v, a). s (v, a) = Some True)"
-  let ?l = "filter ?P (all_possible_assignments_for \<Psi>)"
+  let ?l = "Set.filter ?P (all_possible_assignments_for \<Psi>)"
   { 
-    have "fst ` set ?l = fst ` (\<Union>v \<in> set ?vs. Pair v 
+    have "fst ` ?l = fst ` (\<Union>v \<in> set ?vs. Pair v 
       ` { a \<in> \<R>\<^sub>+ \<Psi> v. s (v, a) = Some True })"
       unfolding set_filter_all_possible_assignments_true_is[OF assms]
       by auto
@@ -850,18 +808,34 @@ proof -
       { a \<in> \<R>\<^sub>+ \<Psi> v. s (v, a) = Some True })" 
       unfolding image_comp[of fst] comp_apply
       by blast
-    finally have "fst ` set ?l = (\<Union>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). 
+    finally have "fst ` ?l = (\<Union>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). 
       { v | a. a \<in> (\<R>\<^sub>+ \<Psi> v) \<and> s (v, a) = Some True })" 
       unfolding setcompr_eq_image fst_conv 
       by simp
   }
   thus ?thesis
     unfolding SAS_Plus_Prime_STRIPS_Prime.strips_state_to_state_def 
-      strips_state_to_state_def dom_map_of_conv_image_fst
-    by blast
+      strips_state_to_state_def dom_map_of_conv_image_fst all_possible_assignments_for_def
+    by (simp add: dom_map_of_set_conv_image_fst)
 qed
 
-lemma strips_state_to_state_range_is: 
+(* context 
+  fixes k b\<^sub>1 xs and a\<^sub>1::'a and a\<^sub>2::'a and y and a\<^sub>3::'a
+  assumes f1:"k = b\<^sub>1" and
+ f2: "   xs = {(b\<^sub>1, a\<^sub>1), (b\<^sub>1, a\<^sub>2)}" and
+f3: "    y = a\<^sub>3"
+begin
+lemma  "map_of_set xs k = Some y "
+  apply (simp add: f1 f2 f3 map_of_set_def elem_from_set_def)
+end *)
+
+(* HERE! *)
+(* lemma map_of_set_SomeD: "map_of_set xs k = Some y \<Longrightarrow> (k, y) \<in>  xs"
+  nitpick
+  unfolding map_of_set_def elem_from_set_def
+  sorry
+ *)
+lemma strips_state_to_state_range_is:
   assumes "is_valid_problem_sas_plus \<Psi>" 
     and "v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     and "a \<in> \<R>\<^sub>+ \<Psi> v" 
@@ -874,16 +848,17 @@ proof -
     and ?D = "range_of \<Psi>"
     and ?s = "\<phi>\<^sub>S\<inverse> \<Psi> s'"
   let ?as = "all_possible_assignments_for \<Psi>"
-  let ?l = "filter (\<lambda>(v, a). s' (v, a) = Some True) ?as"
+  let ?l = "Set.filter (\<lambda>(v, a). s' (v, a) = Some True) ?as"
   show ?thesis 
     proof (rule iffI)
       assume s_of_v_is_Some_a: "?s v = Some a" 
       {
-        have "(v, a) \<in> set ?l" 
+        have "(v, a) \<in>  ?l" 
           using s_of_v_is_Some_a 
           unfolding SAS_Plus_Prime_STRIPS_Prime.strips_state_to_state_def 
             strips_state_to_state_def 
           using map_of_SomeD
+          
           by fast
         hence "s' (v, a) = Some True"
           unfolding all_possible_assignments_for_set_is set_filter
@@ -1736,7 +1711,7 @@ proof -
         using is_valid_operator_sas_plus_then(1, 2) is_valid_operator_op
           v_a_in_precondition_of_op 
         unfolding is_valid_operator_sas_plus_def 
-          SAS_Plus_Representation.is_valid_operator_sas_plus_def Let_def list_all_iff ListMem_iff
+          SAS_Plus_Prime_Representation.is_valid_operator_sas_plus_def Let_def list_all_iff ListMem_iff
         by auto+
       moreover have "(v, a) \<in> dom ?s'" 
         using state_to_strips_state_dom_is[OF assms(1)] s_of_v_is 

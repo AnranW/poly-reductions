@@ -37,10 +37,14 @@ definition  to_precondition
   :: "'variable strips_operator \<Rightarrow> ('variable, bool) assignment list"
   where "to_precondition op \<equiv> map (\<lambda>v. (v, True)) (precondition_of op)" 
 
-(* Problem: Effect is defined as a list, but we might have infinite variables/assignments for a strips operator in the current interpretation *)
+(* Problem: Effect2 is defined as a list, but we might have infinite variables/assignments for a strips operator in the current interpretation *)
+(* Define own Effect2 *)
+(* Compare with AFP/State_Variable_Representation.Effect ; here adapted. *)
+type_synonym ('variable, 'domain) Effect2 = "('variable \<times> 'domain) set"
+
 definition  to_effect
-  :: "'variable strips_operator \<Rightarrow> ('variable, bool) Effect" 
-  where "to_effect op =  [(v\<^sub>a, True). v\<^sub>a \<leftarrow> add_effects_of op] @ [(v\<^sub>d, False). v\<^sub>d \<leftarrow> delete_effects_of op]"
+  :: "'variable strips_operator \<Rightarrow> ('variable, bool) Effect2" 
+  where "to_effect op =  set [(v\<^sub>a, True). v\<^sub>a \<leftarrow> add_effects_of op] \<union> {(v\<^sub>d, False). v\<^sub>d \<in> delete_effects_of op}"
 
 text \<open> Similar to the operator definition, we use a record to represent STRIPS problems and specify
 fields for the variables, operators, as well as the initial and goal state. \<close>
@@ -106,11 +110,11 @@ definition is_operator_applicable_in
 (* TODO effect_to_strips and effect_to_assignments could just be removed if we prove a lemma 
   showing the equivalence to effcond semantics.*)
 definition effect__strips 
-  :: "'variable strips_operator \<Rightarrow> ('variable, bool) Effect"
+  :: "'variable strips_operator \<Rightarrow> ('variable, bool) Effect2"
   where "effect__strips op 
     = 
-      map (\<lambda>v. (v, True)) (add_effects_of op)
-      @ map (\<lambda>v. (v, False)) (delete_effects_of op)"
+     set ( map (\<lambda>v. (v, True)) (add_effects_of op))
+       \<union> (\<lambda>v. (v, False)) ` (delete_effects_of op)"
 
 definition effect_to_assignments 
   where "effect_to_assignments op \<equiv> effect__strips op"
@@ -125,11 +129,30 @@ map corresponding to the assignments to the given state \<^term>\<open>s\<close>
 \footnote{Function \path{effect_to_assignments} converts the operator effect to a list of 
 assignments. }\<close>
 
+definition elem_from_set :: "'a set \<Rightarrow> 'a" where
+"
+  elem_from_set s = Finite_Set.fold (\<lambda>x. \<lambda>y. x) (undefined) s
+"
+(* alternative: elem_from_set s = (THE x. x\<in>s) *)
+
+lemma "elem_from_set {True} = True " 
+  apply (auto simp: elem_from_set_def Finite_Set.fold_def)
+  by (smt (z3) fold_graph.cases fold_graph.emptyI fold_graph.insertI insertCI singletonD the_equality) 
+
+(* In this way we avoid using existential quantifier, but the use of THE might be involved depending on the definition of elem_from_set*)
+definition map_of_set :: "('a \<times> 'b) set \<Rightarrow> 'a \<rightharpoonup> 'b" where
+"
+  map_of_set s = (\<lambda>x. (if x \<notin> fst ` s then None else (Some (snd (elem_from_set {(a,b)|a b. (a,b)\<in>s \<and> a=x})))))
+"
+(* alternative:
+  (let first = {x. (\<exists>y. (x,y)\<in>s)}; second = \<lambda>x. {y. \<exists>y.(x,y)\<in>s} in (\<lambda>x. if x\<notin>first then None else (Some (elem_from_set (second x)))))
+ *)
+
 definition  execute_operator
   :: "'variable strips_state 
     \<Rightarrow> 'variable strips_operator 
     \<Rightarrow> 'variable strips_state" (infixl "\<then>" 52)
   where "execute_operator s op
-    \<equiv> s ++ map_of (effect_to_assignments op)"
+    \<equiv> s ++ map_of_set (effect_to_assignments op)"
 
 end

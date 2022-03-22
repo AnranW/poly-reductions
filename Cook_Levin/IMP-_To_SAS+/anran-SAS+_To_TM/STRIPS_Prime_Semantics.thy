@@ -51,17 +51,17 @@ definition  is_serial_solution_for_problem
 lemma is_valid_problem_strips_initial_of_dom:
   fixes \<Pi>:: "'a strips_problem"
   assumes "is_valid_problem_strips \<Pi>"
-  shows "dom ((\<Pi>)\<^sub>I) = set ((\<Pi>)\<^sub>\<V>)"
+  shows "dom ((\<Pi>)\<^sub>I) = ((\<Pi>)\<^sub>\<V>)"
   proof -
     {
       let ?I = "strips_problem.initial_of \<Pi>"
       let ?vs = "strips_problem.variables_of \<Pi>"
       fix v
-      have "?I v \<noteq> None \<longleftrightarrow> ListMem v ?vs"
+      have "?I v \<noteq> None \<longleftrightarrow>  v \<in> ?vs"
         using assms(1)
         unfolding is_valid_problem_strips_def
         by meson
-      hence "v \<in> dom ?I \<longleftrightarrow> v \<in> set ?vs"
+      hence "v \<in> dom ?I \<longleftrightarrow> v \<in>  ?vs"
         using ListMem_iff
         by fast
     }
@@ -72,11 +72,11 @@ lemma is_valid_problem_strips_initial_of_dom:
 lemma is_valid_problem_dom_of_goal_state_is:
   fixes \<Pi>:: "'a strips_problem"
   assumes "is_valid_problem_strips \<Pi>"
-  shows "dom ((\<Pi>)\<^sub>G) \<subseteq> set ((\<Pi>)\<^sub>\<V>)"
+  shows "dom ((\<Pi>)\<^sub>G) \<subseteq> ((\<Pi>)\<^sub>\<V>)"
   proof -
     let ?vs = "strips_problem.variables_of \<Pi>"
     let ?G = "strips_problem.goal_of \<Pi>"
-    have nb: "\<forall>v. ?G v \<noteq> None \<longrightarrow> ListMem v ?vs"
+    have nb: "\<forall>v. ?G v \<noteq> None \<longrightarrow> v \<in> ?vs"
       using assms(1)
       unfolding is_valid_problem_strips_def
       by meson
@@ -85,7 +85,7 @@ lemma is_valid_problem_dom_of_goal_state_is:
       assume "v \<in> dom ?G"
       then have "?G v \<noteq> None"
         by blast
-      hence "v \<in> set ?vs"
+      hence "v \<in> ?vs"
         using nb
         unfolding ListMem_iff
         by blast
@@ -98,10 +98,10 @@ lemma is_valid_problem_strips_operator_variable_sets:
   fixes \<Pi>:: "'a strips_problem"
   assumes "is_valid_problem_strips \<Pi>"
     and "op \<in> ((\<Pi>)\<^sub>\<O>)"
-  shows "set (precondition_of op) \<subseteq> set ((\<Pi>)\<^sub>\<V>)"
-    and "set (add_effects_of op) \<subseteq> set ((\<Pi>)\<^sub>\<V>)"
-    and "set (delete_effects_of op) \<subseteq> set ((\<Pi>)\<^sub>\<V>)"
-    and "disjnt (set (add_effects_of op)) (set (delete_effects_of op))"
+  shows "set (precondition_of op) \<subseteq> ((\<Pi>)\<^sub>\<V>)"
+    and "set (add_effects_of op) \<subseteq> ((\<Pi>)\<^sub>\<V>)"
+    and "(delete_effects_of op) \<subseteq> ((\<Pi>)\<^sub>\<V>)"
+    and "disjnt (set (add_effects_of op)) ((delete_effects_of op))"
   proof -
     let ?ops = "strips_problem.operators_of \<Pi>"
       and ?vs = "strips_problem.variables_of \<Pi>"
@@ -109,27 +109,27 @@ lemma is_valid_problem_strips_operator_variable_sets:
       using assms(1)
       unfolding is_valid_problem_strips_def
       by meson
-    moreover have "\<forall>v \<in> set (precondition_of op). v \<in> set ((\<Pi>)\<^sub>\<V>)"
-      and "\<forall>v \<in> set (add_effects_of op). v \<in> set ((\<Pi>)\<^sub>\<V>)"
-      and "\<forall>v \<in> set (delete_effects_of op). v \<in> set ((\<Pi>)\<^sub>\<V>)"
-      and "\<forall>v \<in> set (add_effects_of op). v \<notin> set (delete_effects_of op)"
-      and "\<forall>v \<in> set (delete_effects_of op). v \<notin> set (add_effects_of op)"
+    moreover have "\<forall>v \<in> set (precondition_of op). v \<in> ((\<Pi>)\<^sub>\<V>)"
+      and "\<forall>v \<in> set (add_effects_of op). v \<in> ((\<Pi>)\<^sub>\<V>)"
+      and "\<forall>v \<in> (delete_effects_of op). v \<in> ((\<Pi>)\<^sub>\<V>)"
+      and "\<forall>v \<in> set (add_effects_of op). v \<notin> (delete_effects_of op)"
+      and "\<forall>v \<in> (delete_effects_of op). v \<notin> set (add_effects_of op)"
       using assms(2) calculation
       unfolding is_valid_operator_strips_def list_all_iff Let_def ListMem_iff
       using variables_of_def
       by auto+
-    ultimately show "set (precondition_of op) \<subseteq> set ((\<Pi>)\<^sub>\<V>)"
-      and "set (add_effects_of op) \<subseteq> set ((\<Pi>)\<^sub>\<V>)"
-      and "set (delete_effects_of op) \<subseteq> set ((\<Pi>)\<^sub>\<V>)"
-      and "disjnt (set (add_effects_of op)) (set (delete_effects_of op))"
+    ultimately show "set (precondition_of op) \<subseteq> ((\<Pi>)\<^sub>\<V>)"
+      and "set (add_effects_of op) \<subseteq> ((\<Pi>)\<^sub>\<V>)"
+      and "(delete_effects_of op) \<subseteq> ((\<Pi>)\<^sub>\<V>)"
+      and "disjnt (set (add_effects_of op)) ((delete_effects_of op))"
       unfolding disjnt_def
       by fast+
   qed
 
 lemma effect_to_assignments_i:
   assumes "as = effect_to_assignments op"
-  shows "as =  (map (\<lambda>v. (v, True)) (add_effects_of op)
-      @ map (\<lambda>v. (v, False)) (delete_effects_of op))"
+  shows "as =  set(map (\<lambda>v. (v, True)) (add_effects_of op))
+      \<union> (\<lambda>v. (v, False)) ` (delete_effects_of op)"
   using assms
   unfolding effect_to_assignments_def effect__strips_def
   by auto
@@ -139,9 +139,9 @@ lemma effect_to_assignments_ii:
   and the add-effects as well as delete-effects lists only consist of variables.\<close>
   assumes "as = effect_to_assignments op"
   obtains as\<^sub>1 as\<^sub>2
-  where "as = as\<^sub>1 @ as\<^sub>2"
-    and "as\<^sub>1 = map (\<lambda>v. (v, True)) (add_effects_of op)"
-    and "as\<^sub>2 = map (\<lambda>v. (v, False)) (delete_effects_of op)"
+  where "as = as\<^sub>1 \<union> as\<^sub>2"
+    and "as\<^sub>1 = set(map (\<lambda>v. (v, True)) (add_effects_of op))"
+    and "as\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
   by (simp add: assms effect__strips_def effect_to_assignments_def)
 
 \<comment> \<open> NOTE Show that for every variable \<open>v\<close> in either the add effect list or the delete effect
@@ -154,28 +154,28 @@ lemma effect_to_assignments_iii_a:
   fixes v
   assumes "v \<in> set (add_effects_of op)"
     and "as = effect_to_assignments op"
-  obtains a where "a \<in> set as" "a = (v, True)"
+  obtains a where "a \<in> as" "a = (v, True)"
   proof -
     let ?add_assignments = "(\<lambda>v. (v, True)) ` set (add_effects_of op)"
-    let ?delete_assignments = "(\<lambda>v. (v, False)) ` set (delete_effects_of op)"
+    let ?delete_assignments = "(\<lambda>v. (v, False)) ` (delete_effects_of op)"
     obtain as\<^sub>1 as\<^sub>2
-      where a1: "as = as\<^sub>1 @ as\<^sub>2"
-        and a2: "as\<^sub>1 = map (\<lambda>v. (v, True)) (add_effects_of op)"
-        and a3: "as\<^sub>2 = map (\<lambda>v. (v, False)) (delete_effects_of op)"
+      where a1: "as = as\<^sub>1 \<union> as\<^sub>2"
+        and a2: "as\<^sub>1 = set(map (\<lambda>v. (v, True)) (add_effects_of op))"
+        and a3: "as\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
       using assms(2) effect_to_assignments_ii
       by blast
-    then have b: "set as
+    then have b: " as
       = ?add_assignments \<union> ?delete_assignments"
       by auto
     \<comment> \<open> NOTE The existence of an assignment as proposed can be shown by the following sequence of
       set inclusions. \<close>
     {
-      from b have "?add_assignments \<subseteq> set as"
+      from b have "?add_assignments \<subseteq> as"
         by blast
       moreover have "{(v, True)} \<subseteq> ?add_assignments"
         using assms(1) a2
         by blast
-      ultimately have "\<exists>a. a \<in> set as \<and> a = (v, True)"
+      ultimately have "\<exists>a. a \<in> as \<and> a = (v, True)"
         by blast
     }
     then show ?thesis
@@ -186,30 +186,30 @@ lemma effect_to_assignments_iii_a:
 lemma effect_to_assignments_iii_b:
   \<comment> \<open> NOTE This proof is symmetrical to the one above. \<close>
   fixes v
-  assumes "v \<in> set (delete_effects_of op)"
+  assumes "v \<in> (delete_effects_of op)"
     and "as = effect_to_assignments op"
-  obtains a where "a \<in> set as" "a = (v, False)"
+  obtains a where "a \<in> as" "a = (v, False)"
   proof -
     let ?add_assignments = "(\<lambda>v. (v, True)) ` set (add_effects_of op)"
-    let ?delete_assignments = "(\<lambda>v. (v, False)) ` set (delete_effects_of op)"
+    let ?delete_assignments = "(\<lambda>v. (v, False)) ` (delete_effects_of op)"
     obtain as\<^sub>1 as\<^sub>2
-      where a1: "as = as\<^sub>1 @ as\<^sub>2"
-        and a2: "as\<^sub>1 = map (\<lambda>v. (v, True)) (add_effects_of op)"
-        and a3: "as\<^sub>2 = map (\<lambda>v. (v, False)) (delete_effects_of op)"
+      where a1: "as = as\<^sub>1 \<union> as\<^sub>2"
+        and a2: "as\<^sub>1 = set(map (\<lambda>v. (v, True)) (add_effects_of op))"
+        and a3: "as\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
       using assms(2) effect_to_assignments_ii
       by blast
-    then have b: "set as
+    then have b: "as
       = ?add_assignments \<union> ?delete_assignments"
       by auto
     \<comment> \<open> NOTE The existence of an assignment as proposed can be shown by the following sequence of
       set inclusions. \<close>
     {
-      from b have "?delete_assignments \<subseteq> set as"
+      from b have "?delete_assignments \<subseteq> as"
         by blast
       moreover have "{(v, False)} \<subseteq> ?delete_assignments"
         using assms(1) a2
         by blast
-      ultimately have "\<exists>a. a \<in> set as \<and> a = (v, False)"
+      ultimately have "\<exists>a. a \<in> as \<and> a = (v, False)"
         by blast
     }
     then show ?thesis
@@ -221,13 +221,13 @@ lemma effect__strips_i:
   fixes op
   assumes "e = effect__strips op"
   obtains es\<^sub>1 es\<^sub>2
-    where "e = (es\<^sub>1 @ es\<^sub>2)"
-      and "es\<^sub>1 = map (\<lambda>v. (v, True)) (add_effects_of op)"
-      and "es\<^sub>2 = map (\<lambda>v. (v, False)) (delete_effects_of op)"
+    where "e = (es\<^sub>1 \<union> es\<^sub>2)"
+      and "es\<^sub>1 = set(map (\<lambda>v. (v, True)) (add_effects_of op))"
+      and "es\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
   proof -
-    obtain es\<^sub>1 es\<^sub>2 where a: "e = (es\<^sub>1 @ es\<^sub>2)"
-      and b: "es\<^sub>1 = map (\<lambda>v. (v, True)) (add_effects_of op)"
-      and c: "es\<^sub>2 = map (\<lambda>v. (v, False)) (delete_effects_of op)"
+    obtain es\<^sub>1 es\<^sub>2 where a: "e = (es\<^sub>1 \<union> es\<^sub>2)"
+      and b: "es\<^sub>1 = set(map (\<lambda>v. (v, True)) (add_effects_of op))"
+      and c: "es\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
       using assms(1)
       unfolding effect__strips_def
       by blast
@@ -238,48 +238,48 @@ lemma effect__strips_i:
 
 lemma effect__strips_ii:
   fixes op
-  assumes "e = ConjunctiveEffect (es\<^sub>1 @ es\<^sub>2)"
-    and "es\<^sub>1 = map (\<lambda>v. (v, True)) (add_effects_of op)"
-    and "es\<^sub>2 = map (\<lambda>v. (v, False)) (delete_effects_of op)"
-  shows "\<forall>v \<in> set (add_effects_of op). (\<exists>e' \<in> set es\<^sub>1. e' = (v, True))"
-    and "\<forall>v \<in> set (delete_effects_of op). (\<exists>e' \<in> set es\<^sub>2. e' = (v, False))"
+  assumes "e = ConjunctiveEffect (es\<^sub>1 \<union> es\<^sub>2)"
+    and "es\<^sub>1 = set(map (\<lambda>v. (v, True)) (add_effects_of op))"
+    and "es\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
+  shows "\<forall>v \<in> set (add_effects_of op). (\<exists>e' \<in>  es\<^sub>1. e' = (v, True))"
+    and "\<forall>v \<in> (delete_effects_of op). (\<exists>e' \<in>  es\<^sub>2. e' = (v, False))"
   proof
   \<comment> \<open> NOTE Show that for each variable \<open>v\<close> in the add effect list, we can obtain an atomic effect
   with true value. \<close>
     fix v
     {
       assume a: "v \<in> set (add_effects_of op)"
-      have "set es\<^sub>1 = (\<lambda>v. (v, True)) ` set (add_effects_of op)"
+      have "es\<^sub>1 = (\<lambda>v. (v, True)) ` set (add_effects_of op)"
         using assms(2) List.set_map
         by auto
       then obtain e'
-        where "e' \<in> set es\<^sub>1"
+        where "e' \<in> es\<^sub>1"
         and "e' =  (\<lambda>v. (v, True)) v"
         using a
         by blast
-      then have "\<exists>e' \<in> set es\<^sub>1. e' = (v, True)"
+      then have "\<exists>e' \<in>  es\<^sub>1. e' = (v, True)"
         by blast
     }
-    thus "v \<in> set (add_effects_of op) \<Longrightarrow> \<exists>e' \<in> set es\<^sub>1. e' = (v, True)"
+    thus "v \<in> set (add_effects_of op) \<Longrightarrow> \<exists>e' \<in>  es\<^sub>1. e' = (v, True)"
       by fast
   \<comment> \<open> NOTE the proof is symmetrical to the one above: for each variable v in the delete effect list,
   we can obtain an atomic effect with v being false. \<close>
   next
     {
       fix v
-      assume a: "v \<in> set (delete_effects_of op)"
-      have "set es\<^sub>2 = (\<lambda>v. (v, False)) ` set (delete_effects_of op)"
+      assume a: "v \<in> (delete_effects_of op)"
+      have " es\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
         using assms(3) List.set_map
         by force
       then obtain e''
-        where "e'' \<in> set es\<^sub>2"
+        where "e'' \<in>  es\<^sub>2"
         and "e'' =  (\<lambda>v. (v, False)) v"
         using a
         by blast
-      then have "\<exists>e'' \<in> set es\<^sub>2. e'' = (v, False)"
+      then have "\<exists>e'' \<in>  es\<^sub>2. e'' = (v, False)"
         by blast
     }
-    thus "\<forall>v\<in>set (delete_effects_of op). \<exists>e'\<in>set es\<^sub>2. e' = (v, False)"
+    thus "\<forall>v\<in>(delete_effects_of op). \<exists>e'\<in> es\<^sub>2. e' = (v, False)"
       by fast
   qed
 
@@ -298,7 +298,7 @@ lemma map_of_constant_assignments_dom:
     ultimately show ?thesis
       by argo
   qed
-
+thm_deps map_of_constant_assignments_dom
 lemma effect__strips_iii_a:
   assumes "s' = (s \<then> op)"
   shows "\<And>v. v \<in> set (add_effects_of op) \<Longrightarrow> s' v = Some True"
@@ -306,14 +306,18 @@ lemma effect__strips_iii_a:
     fix v
     assume a: "v \<in> set (add_effects_of op)"
     let ?as = "effect_to_assignments op"
-    obtain as\<^sub>1 as\<^sub>2 where b: "?as = as\<^sub>1 @ as\<^sub>2"
-      and c: "as\<^sub>1 = map (\<lambda>v. (v, True)) (add_effects_of op)"
-      and "as\<^sub>2 = map (\<lambda>v. (v, False)) (delete_effects_of op)"
+    obtain as\<^sub>1 as\<^sub>2 where b: "?as = as\<^sub>1 \<union> as\<^sub>2"
+      and c: "as\<^sub>1 = set(map (\<lambda>v. (v, True)) (add_effects_of op))"
+      and "as\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
       using effect_to_assignments_ii
       by blast
-    have d: "map_of ?as = map_of as\<^sub>2 ++ map_of as\<^sub>1"
-      using b Map.map_of_append
-      by auto
+    have d: "map_of_set ?as = map_of_set as\<^sub>2 ++ map_of_set as\<^sub>1"
+      using b Map.map_of_append map_of_set_def
+      apply (auto simp: map_of_set_def elem_from_set_def)
+      unfolding elem_from_set_def
+      apply (rule ext)
+(* TODO: restructure. *)
+      by (smt (z3) Un_iff case_prod_beta' image_Un map_add_None map_add_Some_iff)
     {
       \<comment> \<open> TODO refactor? \<close>
       let ?vs = "add_effects_of op"
@@ -350,14 +354,14 @@ lemma effect__strips_iii_a:
 (* TODO In contrast to the proof above we need proof preparation with auto. Why? *)
 lemma effect__strips_iii_b:
   assumes "s' = (s \<then> op)"
-  shows "\<And>v. v \<in> set (delete_effects_of op) \<and> v \<notin> set (add_effects_of op) \<Longrightarrow> s' v = Some False"
+  shows "\<And>v. v \<in> (delete_effects_of op) \<and> v \<notin> set (add_effects_of op) \<Longrightarrow> s' v = Some False"
   proof (auto)
     fix v
-    assume a1: "v \<notin> set (add_effects_of op)" and a2: "v \<in> set (delete_effects_of op)"
+    assume a1: "v \<notin> set (add_effects_of op)" and a2: "v \<in> (delete_effects_of op)"
     let ?as = "effect_to_assignments op"
-    obtain as\<^sub>1 as\<^sub>2 where b: "?as = as\<^sub>1 @ as\<^sub>2"
-      and c: "as\<^sub>1 = map (\<lambda>v. (v, True)) (add_effects_of op)"
-      and d: "as\<^sub>2 = map (\<lambda>v. (v, False)) (delete_effects_of op)"
+    obtain as\<^sub>1 as\<^sub>2 where b: "?as = as\<^sub>1 \<union> as\<^sub>2"
+      and c: "as\<^sub>1 = set(map (\<lambda>v. (v, True)) (add_effects_of op))"
+      and d: "as\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
       using effect_to_assignments_ii
       by blast
     have e: "map_of ?as = map_of as\<^sub>2 ++ map_of as\<^sub>1"
@@ -399,7 +403,7 @@ lemma effect__strips_iii_b:
     moreover
     {
       let ?f = "\<lambda>_. False"
-      from d have "map_of as\<^sub>2 = (Some \<circ> ?f) |` (set (delete_effects_of op))"
+      from d have "map_of as\<^sub>2 = (Some \<circ> ?f) |` ((delete_effects_of op))"
         using map_of_map_restrict
         by fast
       then have "map_of as\<^sub>2 v = Some False"
@@ -413,14 +417,14 @@ lemma effect__strips_iii_b:
 (* TODO We need proof preparation with auto. Why? *)
 lemma effect__strips_iii_c:
   assumes "s' = (s \<then> op)"
-  shows "\<And>v. v \<notin> set (add_effects_of op) \<and> v \<notin> set (delete_effects_of op) \<Longrightarrow> s' v = s v"
+  shows "\<And>v. v \<notin> set (add_effects_of op) \<and> v \<notin> (delete_effects_of op) \<Longrightarrow> s' v = s v"
   proof (auto)
     fix v
-    assume a1: "v \<notin> set (add_effects_of op)" and a2: "v \<notin> set (delete_effects_of op)"
+    assume a1: "v \<notin> set (add_effects_of op)" and a2: "v \<notin> (delete_effects_of op)"
     let ?as = "effect_to_assignments op"
-    obtain as\<^sub>1 as\<^sub>2 where b: "?as = as\<^sub>1 @ as\<^sub>2"
-      and c: "as\<^sub>1 = map (\<lambda>v. (v, True)) (add_effects_of op)"
-      and d: "as\<^sub>2 = map (\<lambda>v. (v, False)) (delete_effects_of op)"
+    obtain as\<^sub>1 as\<^sub>2 where b: "?as = as\<^sub>1 \<union> as\<^sub>2"
+      and c: "as\<^sub>1 = set(map (\<lambda>v. (v, True)) (add_effects_of op))"
+      and d: "as\<^sub>2 = (\<lambda>v. (v, False)) ` (delete_effects_of op)"
       using effect_to_assignments_ii
       by blast
     have e: "map_of ?as = map_of as\<^sub>2 ++ map_of as\<^sub>1"
@@ -434,7 +438,7 @@ lemma effect__strips_iii_c:
         using a1
         by blast
     } moreover  {
-      have "dom (map_of as\<^sub>2) = set (delete_effects_of op)"
+      have "dom (map_of as\<^sub>2) = (delete_effects_of op)"
         using d map_of_constant_assignments_dom
         by metis
       then have "v \<notin> dom (map_of as\<^sub>2)"
@@ -471,10 +475,10 @@ theorem  operator_effect__strips:
       v \<in> set (add_effects_of op)
       \<Longrightarrow> s' v = Some True"
     and "\<And>v.
-      v \<notin> set (add_effects_of op) \<and> v \<in> set (delete_effects_of op)
+      v \<notin> set (add_effects_of op) \<and> v \<in> (delete_effects_of op)
       \<Longrightarrow> s' v = Some False"
     and "\<And>v.
-      v \<notin> set (add_effects_of op) \<and> v \<notin> set (delete_effects_of op)
+      v \<notin> set (add_effects_of op) \<and> v \<notin> (delete_effects_of op)
       \<Longrightarrow> s' v = s v"
 proof (auto)
   show "\<And>v.
@@ -485,14 +489,14 @@ proof (auto)
 next
   show "\<And>v.
     v \<notin> set (add_effects_of op)
-    \<Longrightarrow> v \<in> set (delete_effects_of op)
+    \<Longrightarrow> v \<in> (delete_effects_of op)
     \<Longrightarrow>  s' v = Some False"
     using assms effect__strips_iii_b
     by fast
 next
   show "\<And>v.
     v \<notin> set (add_effects_of op)
-    \<Longrightarrow> v \<notin> set (delete_effects_of op)
+    \<Longrightarrow> v \<notin> (delete_effects_of op)
     \<Longrightarrow> s' v = s v"
     using assms effect__strips_iii_c
     by metis
@@ -535,9 +539,9 @@ fun  execute_parallel_plan
     else s)"
 
 definition "are_operators_interfering op\<^sub>1 op\<^sub>2
-  \<equiv> list_ex (\<lambda>v. list_ex ((=) v) (delete_effects_of op\<^sub>1)) (precondition_of op\<^sub>2)
-    \<or>  list_ex (\<lambda>v. list_ex ((=) v) (precondition_of op\<^sub>1)) (delete_effects_of op\<^sub>2)"
-
+  \<equiv> list_ex (\<lambda>v. Bex (delete_effects_of op\<^sub>1)  ((=) v)) (precondition_of op\<^sub>2)
+    \<or>  Bex  (delete_effects_of op\<^sub>2) (\<lambda>v. list_ex ((=) v) (precondition_of op\<^sub>1))"
+find_consts name:Bex
 (* TODO rewrite as inductive predicate *)
 primrec are_all_operators_non_interfering
   :: "'variable strips_operator list \<Rightarrow> bool"
@@ -775,8 +779,8 @@ lemma execute_parallel_plan_precondition_cons_i:
       have a: "?s' = s \<then> op"
         by (simp add: execute_operator_def)
       then have "\<And>v. v \<in> set (add_effects_of op) \<Longrightarrow> ?s' v = Some True"
-        and "\<And>v. v \<notin> set (add_effects_of op) \<and> v \<in> set (delete_effects_of op) \<Longrightarrow> ?s' v = Some False"
-        and "\<And>v. v \<notin> set (add_effects_of op) \<and> v \<notin> set (delete_effects_of op) \<Longrightarrow> ?s' v = s v"
+        and "\<And>v. v \<notin> set (add_effects_of op) \<and> v \<in> (delete_effects_of op) \<Longrightarrow> ?s' v = Some False"
+        and "\<And>v. v \<notin> set (add_effects_of op) \<and> v \<notin> (delete_effects_of op) \<Longrightarrow> ?s' v = s v"
         using operator_effect__strips
         by metis+
     }
@@ -808,16 +812,16 @@ lemma execute_parallel_plan_precondition_cons_i:
       moreover {
         fix v
         have "list_all (\<lambda>v'. \<not>v = v') (delete_effects_of op)
-          = (\<forall>v' \<in> set (delete_effects_of op). \<not>v = v')"
+          = (\<forall>v' \<in> (delete_effects_of op). \<not>v = v')"
           using list_all_iff [where P="\<lambda>v'. \<not>v = v'" and x="delete_effects_of op"]
           .
       }
-      ultimately have "\<forall>v \<in> set (precondition_of op'). \<forall>v' \<in> set (delete_effects_of op). \<not>v = v'"
+      ultimately have "\<forall>v \<in> set (precondition_of op'). \<forall>v' \<in> (delete_effects_of op). \<not>v = v'"
         using \<beta> list_all_iff[
           where P="\<lambda>v. list_all (\<lambda>v'. \<not>v = v') (delete_effects_of op)"
             and x="precondition_of op'"]
         by presburger
-      then have "v \<notin> set (delete_effects_of op)"
+      then have "v \<notin> (delete_effects_of op)"
         using \<alpha>
         by fast
     }
@@ -850,7 +854,7 @@ lemma execute_parallel_plan_precondition_cons_i:
       next
         case e: False
         then show ?thesis
-        proof (cases "v \<in> set (delete_effects_of op)")
+        proof (cases "v \<in> (delete_effects_of op)")
           case True
           then show ?thesis
             using assms(1) b d
@@ -980,20 +984,20 @@ corollary execute_parallel_operator_cons_equals_corollary:
 
 (* TODO duplicate? *)
 lemma effect_to_assignments_simp[simp]: "effect_to_assignments op
-  = map (\<lambda>v. (v, True)) (add_effects_of op) @ map (\<lambda>v. (v, False)) (delete_effects_of op)"
+  = set(map (\<lambda>v. (v, True)) (add_effects_of op)) @ (\<lambda>v. (v, False)) ` (delete_effects_of op)"
   by (simp add: effect_to_assignments_i)
 
 lemma effect_to_assignments_set_is[simp]:
   "set (effect_to_assignments op) = { ((v, a), True) | v a. (v, a) \<in> set (add_effects_of op) }
-    \<union> { ((v, a), False) | v a. (v, a) \<in> set (delete_effects_of op) }"
+    \<union> { ((v, a), False) | v a. (v, a) \<in> (delete_effects_of op) }"
 proof -
     obtain as where "effect__strips op = as"
-      and "as = map (\<lambda>v. (v, True)) (add_effects_of op)
-        @ map (\<lambda>v. (v, False)) (delete_effects_of op)"
+      and "as = set(map (\<lambda>v. (v, True)) (add_effects_of op))
+        @ (\<lambda>v. (v, False)) ` (delete_effects_of op)"
       unfolding effect__strips_def
       by blast
     moreover have "as
-      = map (\<lambda>v. (v, True)) (add_effects_of op) @ map (\<lambda>v. (v, False)) (delete_effects_of op)"
+      = set(map (\<lambda>v. (v, True)) (add_effects_of op)) @ (\<lambda>v. (v, False)) ` (delete_effects_of op)"
       using calculation(2)
       unfolding map_append map_map comp_apply
       by auto
@@ -1006,7 +1010,7 @@ proof -
   qed
 
 corollary effect_to_assignments_construction_from_function_graph:
-  assumes "set (add_effects_of op) \<inter> set (delete_effects_of op) = {}"
+  assumes "set (add_effects_of op) \<inter> (delete_effects_of op) = {}"
   shows "effect_to_assignments op = map
     (\<lambda>v. (v, if ListMem v (add_effects_of op) then True else False))
     (add_effects_of op @ delete_effects_of op)"
@@ -1046,31 +1050,31 @@ corollary effect_to_assignments_construction_from_function_graph:
 
 corollary map_of_effect_to_assignments_is_none_if:
   assumes "\<not>v \<in> set (add_effects_of op)"
-    and "\<not>v \<in> set (delete_effects_of op)"
+    and "\<not>v \<in> (delete_effects_of op)"
   shows "map_of (effect_to_assignments op) v = None"
   proof -
     let ?l = "effect_to_assignments op"
     {
       have "set ?l = { (v, True) | v. v \<in> set (add_effects_of op) }
-        \<union> { (v, False) | v. v \<in> set (delete_effects_of op)}"
+        \<union> { (v, False) | v. v \<in> (delete_effects_of op)}"
         by auto
       then have "fst ` set ?l
         = (fst ` {(v, True) | v. v \<in> set (add_effects_of op)})
-          \<union> (fst ` {(v, False) | v. v \<in> set (delete_effects_of op)})"
+          \<union> (fst ` {(v, False) | v. v \<in> (delete_effects_of op)})"
         using image_Un[of fst "{(v, True) | v. v \<in> set (add_effects_of op)}"
-           "{(v, False) | v. v \<in> set (delete_effects_of op)}"]
+           "{(v, False) | v. v \<in> (delete_effects_of op)}"]
         by presburger
       \<comment> \<open> TODO slow.\<close>
       also have "\<dots> = (fst ` (\<lambda>v. (v, True)) ` set (add_effects_of op))
-        \<union> (fst ` (\<lambda>v. (v, False)) ` set (delete_effects_of op))"
+        \<union> (fst ` (\<lambda>v. (v, False)) ` (delete_effects_of op))"
         using setcompr_eq_image[of "\<lambda>v. (v, True)" "\<lambda>v. v \<in> set (add_effects_of op)"]
-          setcompr_eq_image[of "\<lambda>v. (v, False)" "\<lambda>v. v \<in> set (delete_effects_of op)"]
+          setcompr_eq_image[of "\<lambda>v. (v, False)" "\<lambda>v. v \<in> (delete_effects_of op)"]
         by simp
       \<comment> \<open> TODO slow.\<close>
-      also have "\<dots> = id ` set (add_effects_of op) \<union> id ` set (delete_effects_of op)"
+      also have "\<dots> = id ` set (add_effects_of op) \<union> id ` (delete_effects_of op)"
         by force
       \<comment> \<open> TODO slow.\<close>
-      finally have "fst ` set ?l = set (add_effects_of op) \<union> set (delete_effects_of op)"
+      finally have "fst ` set ?l = set (add_effects_of op) \<union> (delete_effects_of op)"
         by auto
       hence "v \<notin> fst ` set ?l"
         using assms(1, 2)
@@ -1095,8 +1099,8 @@ lemma execute_parallel_operator_positive_effect_if_i:
       using assms(4)
       by fastforce
     moreover {
-      have "set (add_effects_of op) \<inter> set (delete_effects_of op) = {}"
-        using are_all_operator_effects_consistent_set assms(2, 3)
+      have "set (add_effects_of op) \<inter> (delete_effects_of op) = {}"
+        using are_all_operator_effects_consistent_assms(2, 3)
         by fast
       moreover have "effect_to_assignments op = ?l'"
         using effect_to_assignments_construction_from_function_graph(1) calculation
@@ -1181,7 +1185,7 @@ lemma execute_parallel_operator_negative_effect_if_i:
   assumes "are_all_operators_applicable s ops"
     and "are_all_operator_effects_consistent ops"
     and "op \<in> set ops"
-    and "v \<in> set (delete_effects_of op)"
+    and "v \<in> (delete_effects_of op)"
   shows "map_of (effect_to_assignments op) v = Some False"
   proof -
     let ?f = "\<lambda>x. if ListMem x (delete_effects_of op) then False else True"
@@ -1194,8 +1198,8 @@ lemma execute_parallel_operator_negative_effect_if_i:
       using assms(4)
       by simp
     moreover {
-      have "set (add_effects_of op) \<inter> set (delete_effects_of op) = {}"
-        using are_all_operator_effects_consistent_set assms(2, 3)
+      have "set (add_effects_of op) \<inter> (delete_effects_of op) = {}"
+        using are_all_operator_effects_consistent_assms(2, 3)
         by fast
       moreover have "effect_to_assignments op = ?l'"
         using effect_to_assignments_construction_from_function_graph(2) calculation
@@ -1217,7 +1221,7 @@ lemma execute_parallel_operator_negative_effect_if:
   assumes "are_all_operators_applicable s ops"
     and "are_all_operator_effects_consistent ops"
     and "op \<in> set ops"
-    and "v \<in> set (delete_effects_of op)"
+    and "v \<in> (delete_effects_of op)"
   shows "execute_parallel_operator s ops v = Some False"
   proof -
     let ?l = "map (map_of \<circ> effect_to_assignments) ops"
@@ -1242,7 +1246,7 @@ lemma execute_parallel_operator_negative_effect_if:
         where op'_in_set_ops: "op' \<in> set ops"
           and m'_is: "m' = (map_of \<circ> effect_to_assignments) op'"
         by auto
-      then have "set (delete_effects_of op) \<inter> set (add_effects_of op') = {}"
+      then have "(delete_effects_of op) \<inter> set (add_effects_of op') = {}"
         using assms(2, 3) are_all_operator_effects_consistent_set[of ops]
         by blast
       then have "v \<notin> set (add_effects_of op')"
@@ -1277,7 +1281,7 @@ lemma execute_parallel_operator_negative_effect_if:
   qed
 
 lemma execute_parallel_operator_no_effect_if:
-  assumes "\<forall>op \<in> set ops. \<not>v \<in> set (add_effects_of op) \<and> \<not>v \<in> set (delete_effects_of op)"
+  assumes "\<forall>op \<in> set ops. \<not>v \<in> set (add_effects_of op) \<and> \<not>v \<in> (delete_effects_of op)"
   shows "execute_parallel_operator s ops v = s v"
   using assms
   unfolding execute_parallel_operator_def
@@ -1298,7 +1302,7 @@ lemma execute_parallel_operator_no_effect_if:
         by blast
     }
     moreover {
-      have "\<forall>op\<in>set ops. v \<notin> set (add_effects_of op) \<and> v \<notin> set (delete_effects_of op)"
+      have "\<forall>op\<in>set ops. v \<notin> set (add_effects_of op) \<and> v \<notin> (delete_effects_of op)"
         using Cons.prems(1)
         by simp
       hence "foldl (++) (s ++ ?f a) (map ?f ops) v = (s ++ ?f a) v"
@@ -1318,7 +1322,7 @@ lemma execute_parallel_operator_no_effect_if:
   qed fastforce
 
 corollary execute_parallel_operators_strips_none_if:
-  assumes "\<forall>op \<in> set ops. \<not>v \<in> set (add_effects_of op) \<and> \<not>v \<in> set (delete_effects_of op)"
+  assumes "\<forall>op \<in> set ops. \<not>v \<in> set (add_effects_of op) \<and> \<not>v \<in> (delete_effects_of op)"
     and "s v = None"
   shows "execute_parallel_operator s ops v = None"
   using execute_parallel_operator_no_effect_if[OF assms(1)] assms(2)
@@ -1326,10 +1330,10 @@ corollary execute_parallel_operators_strips_none_if:
 
 corollary execute_parallel_operators_strips_none_if_contraposition:
   assumes "\<not>execute_parallel_operator s ops v = None"
-  shows "(\<exists>op \<in> set ops. v \<in> set (add_effects_of op) \<or> v \<in> set (delete_effects_of op))
+  shows "(\<exists>op \<in> set ops. v \<in> set (add_effects_of op) \<or> v \<in> (delete_effects_of op))
     \<or> s v \<noteq> None"
   proof -
-    let ?P = "(\<forall>op \<in> set ops. \<not>v \<in> set (add_effects_of op) \<and> \<not>v \<in> set (delete_effects_of op))
+    let ?P = "(\<forall>op \<in> set ops. \<not>v \<in> set (add_effects_of op) \<and> \<not>v \<in> (delete_effects_of op))
       \<and> s v = None"
       and ?Q = "execute_parallel_operator s ops v = None"
     have "?P \<Longrightarrow> ?Q"
@@ -1373,10 +1377,10 @@ theorem  execute_parallel_operator_effect:
   and "are_all_operator_effects_consistent ops"
 shows "op \<in> set ops \<and> v \<in> set (add_effects_of op)
   \<longrightarrow> execute_parallel_operator s ops v = Some True"
-  and "op \<in> set ops \<and> v \<in> set (delete_effects_of op)
+  and "op \<in> set ops \<and> v \<in> (delete_effects_of op)
     \<longrightarrow> execute_parallel_operator s ops v = Some False"
   and "(\<forall>op \<in> set ops.
-    v \<notin> set (add_effects_of op) \<and> v \<notin> set (delete_effects_of op))
+    v \<notin> set (add_effects_of op) \<and> v \<notin> (delete_effects_of op))
     \<longrightarrow> execute_parallel_operator s ops v = s v"
   using execute_parallel_operator_positive_effect_if[OF assms]
     execute_parallel_operator_negative_effect_if[OF assms]
@@ -1798,7 +1802,7 @@ lemma trace_parallel_plan_strips_none_if:
   assumes "is_valid_problem_strips \<Pi>"
     and "is_parallel_solution_for_problem \<Pi> \<pi>"
     and "k < length (trace_parallel_plan_strips ((\<Pi>)\<^sub>I) \<pi>)"
-  shows "(trace_parallel_plan_strips ((\<Pi>)\<^sub>I) \<pi> ! k) v = None \<longleftrightarrow> v \<notin> set ((\<Pi>)\<^sub>\<V>)"
+  shows "(trace_parallel_plan_strips ((\<Pi>)\<^sub>I) \<pi> ! k) v = None \<longleftrightarrow> v \<notin> ((\<Pi>)\<^sub>\<V>)"
   proof -
     let ?vs = "strips_problem.variables_of \<Pi>"
       and ?ops = "strips_problem.operators_of \<Pi>"
@@ -1819,7 +1823,7 @@ lemma trace_parallel_plan_strips_none_if:
         have k_lt_length_\<tau>_minus_one: "k < length ?\<tau> - 1"
           using Suc.prems(3)
           by linarith
-        then have IH: "(trace_parallel_plan_strips ?I \<pi> ! k) v = None \<longleftrightarrow> v \<notin>set ((\<Pi>)\<^sub>\<V>)"
+        then have IH: "(trace_parallel_plan_strips ?I \<pi> ! k) v = None \<longleftrightarrow> v \<notin>((\<Pi>)\<^sub>\<V>)"
           using Suc.IH[OF Suc.prems(1, 2)]
           by force
         have \<tau>_Suc_k_is: "(?\<tau> ! Suc k) = execute_parallel_operator (?\<tau> ! k) (\<pi> ! k)"
@@ -1831,20 +1835,20 @@ lemma trace_parallel_plan_strips_none_if:
         show ?case
           proof (rule iffI)
             assume \<tau>_Suc_k_of_v_is_None: "(?\<tau> ! Suc k) v = None"
-            show "v \<notin> set ((\<Pi>)\<^sub>\<V>)"
+            show "v \<notin> ((\<Pi>)\<^sub>\<V>)"
               proof (rule ccontr)
-                assume "\<not>v \<notin> set ((\<Pi>)\<^sub>\<V>)"
+                assume "\<not>v \<notin> ((\<Pi>)\<^sub>\<V>)"
                 then have v_in_set_vs: "v \<in> set((\<Pi>)\<^sub>\<V>)"
                   by blast
                 show False
                   proof (cases "\<exists>op \<in> set (\<pi> ! k).
-                    v \<in> set (add_effects_of op) \<or> v \<in> set (delete_effects_of op)")
+                    v \<in> set (add_effects_of op) \<or> v \<in> (delete_effects_of op)")
                     case True
                     then obtain op
                       where op_in_\<pi>\<^sub>k: "op \<in> set (\<pi> ! k)"
-                        and "v \<in> set (add_effects_of op) \<or> v \<in> set (delete_effects_of op)"..
+                        and "v \<in> set (add_effects_of op) \<or> v \<in> (delete_effects_of op)"..
                     then consider (A) "v \<in> set (add_effects_of op)"
-                      | (B) "v \<in> set (delete_effects_of op)"
+                      | (B) "v \<in> (delete_effects_of op)"
                       by blast
                     thus False
                       using execute_parallel_operator_positive_effect_if[OF
@@ -1856,12 +1860,12 @@ lemma trace_parallel_plan_strips_none_if:
                   next
                     case False
                     then have "\<forall>op \<in> set (\<pi> ! k).
-                      v \<notin> set (add_effects_of op) \<and> v \<notin> set (delete_effects_of op)"
+                      v \<notin> set (add_effects_of op) \<and> v \<notin> (delete_effects_of op)"
                       by blast
                     then have "(?\<tau> ! Suc k) v = (?\<tau> ! k) v"
                       using execute_parallel_operator_no_effect_if \<tau>_Suc_k_is
                       by fastforce
-                    then have "v \<notin> set ((\<Pi>)\<^sub>\<V>)"
+                    then have "v \<notin> ((\<Pi>)\<^sub>\<V>)"
                       using IH  \<tau>_Suc_k_of_v_is_None
                       by simp
                     thus False
@@ -1870,7 +1874,7 @@ lemma trace_parallel_plan_strips_none_if:
                   qed
               qed
           next
-            assume v_notin_vs: "v \<notin> set ((\<Pi>)\<^sub>\<V>)"
+            assume v_notin_vs: "v \<notin> ((\<Pi>)\<^sub>\<V>)"
             {
               fix op
               assume op_in_\<pi>\<^sub>k: "op \<in> set (\<pi> ! k)"
@@ -1892,7 +1896,7 @@ lemma trace_parallel_plan_strips_none_if:
               then have op_in_ops: "op \<in> ?ops"
                 using is_parallel_solution_for_problem_operator_set[OF assms(2) _ op_in_\<pi>\<^sub>k]
                 by force
-              hence "v \<notin> set (add_effects_of op)" and "v \<notin> set (delete_effects_of op)"
+              hence "v \<notin> set (add_effects_of op)" and "v \<notin> (delete_effects_of op)"
                 subgoal
                   using is_valid_problem_strips_operator_variable_sets(2) assms(1) op_in_ops
                     v_notin_vs
