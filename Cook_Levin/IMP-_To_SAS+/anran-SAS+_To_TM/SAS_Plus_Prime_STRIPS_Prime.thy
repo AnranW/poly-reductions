@@ -861,7 +861,7 @@ proof -
     by (metis (mono_tags, lifting) option.inject)
   thus ?thesis using assms(1) 1 by force
 qed
-
+(* HERE! *)
 lemma map_of_set_constant_assignments_defined_if:
   assumes "\<forall>(v, a) \<in>  l. \<forall>(v', a') \<in>  l. v \<noteq> v' \<or> a = a'"
     and "(v, a) \<in>  l" 
@@ -955,7 +955,7 @@ proof -
    let ?vs = "sas_plus_problem.variables_of \<Psi>"
   let ?s' = "\<phi>\<^sub>S \<Psi> s"
     and ?f = "\<lambda>(v, a). the (s v) = a"
-    and ?l = "concat (map (possible_assignments_for \<Psi>) (filter (\<lambda>v. s v \<noteq> None) ?vs))"
+    and ?l = "\<Union> (set (map (possible_assignments_for \<Psi>) (filter (\<lambda>v. s v \<noteq> None) ?vs)))"
   have "(v, a) \<in> dom ?s'" 
     using state_to_strips_state_dom_element_iff[
         OF assms(1)] assms(2, 3, 4)
@@ -966,22 +966,22 @@ proof -
       by blast
     moreover have "\<forall>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). v \<in> dom (sas_plus_problem.range_of \<Psi>)"
       using is_valid_problem_sas_plus_dom_sas_plus_problem_range_of[OF assms(1)]. 
-    moreover have "set ?l = (\<Union>v \<in> { v | v. v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> s v \<noteq> None }. 
+    moreover have " ?l = (\<Union>v \<in> { v | v. v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> s v \<noteq> None }. 
       { (v, a) |a. a \<in> \<R>\<^sub>+ \<Psi> v })"
       unfolding state_to_strips_state_dom_is_i[OF calculation(2)]
-      by blast
-    ultimately have "(v, a) \<in> set ?l" 
+      using calculation(2) possible_assignments_for_set_is by force
+    ultimately have "(v, a) \<in> ?l" 
       using assms(4)
       by blast
   }
-  moreover have "set ?l \<noteq> {}" 
+  moreover have "?l \<noteq> {}" 
     using calculation
     by force
   \<comment> \<open> TODO slow.\<close>
   ultimately show ?thesis 
     unfolding SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def
       state_to_strips_state_def 
-    using map_of_from_function_graph_is_some_if[of ?l "(v, a)" ?f] 
+    using map_of_set_from_function_graph_is_some_if[of ?l "(v, a)" ?f] 
     unfolding split_def
     by fastforce
 qed
@@ -1042,7 +1042,7 @@ proof -
     and ?s' = "\<phi>\<^sub>S \<Psi> s"
   let ?s'' = "\<phi>\<^sub>S\<inverse> \<Psi> ?s'" 
   let ?P = "\<lambda>(v, a). ?s' (v, a) = Some True"
-  let ?as = "filter ?P (all_possible_assignments_for \<Psi>)" 
+  let ?as = "Set.filter ?P (all_possible_assignments_for \<Psi>)" 
     and ?As = "Set.filter ?P (\<Union>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). 
       { (v, a) | a. a \<in> \<R>\<^sub>+ \<Psi> v })"
   {
@@ -1051,7 +1051,7 @@ proof -
         range_of_not_empty
       by force
     (* TODO slow. *)
-    hence "set ?as = ?As"
+    hence " ?as = ?As"
       unfolding set_filter 
       using all_possible_assignments_for_set_is
       by force
@@ -1059,8 +1059,8 @@ proof -
   moreover {
     {
       fix v v' a a' 
-      assume "(v, a) \<in> set ?as" 
-        and "(v', a') \<in> set ?as" 
+      assume "(v, a) \<in>  ?as" 
+        and "(v', a') \<in>  ?as" 
       then have "(v, a) \<in> ?As" and "(v', a') \<in> ?As" 
         using nb 
         by blast+
@@ -1095,12 +1095,12 @@ proof -
           assms(4)
         by simp
       (* TODO slow *)
-      hence "(v, a) \<in> set ?as" 
+      hence "(v, a) \<in>  ?as" 
         using all_possible_assignments_for_set_is assms(3, 5) nb
         by simp
     }
-    ultimately have "map_of ?as v = Some a" 
-      using map_of_constant_assignments_defined_if[of ?as v a] 
+    ultimately have "map_of_set ?as v = Some a" 
+      using map_of_set_constant_assignments_defined_if[of ?as v a] 
       by blast
   }
   \<comment> \<open> TODO slow. \<close>
@@ -1258,7 +1258,7 @@ proof -
           using calculation(7, 12)
           by argo
         moreover have "the (t v) = a" 
-          using calculation(10, 13) try0
+          using calculation(10, 13)
           by force
         moreover {
           have "v \<in> dom t" 
@@ -1285,7 +1285,7 @@ from SAS+ to STRIPS and when transforming back from STRIPS to SAS+. \<close>
 (* TODO prune assumptions (not required) *)
 lemma sas_plus_operator_inverse_is:
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    and "op \<in>  ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
   shows "(\<phi>\<^sub>O\<inverse> \<Psi> (\<phi>\<^sub>O \<Psi> op)) = op"
 proof -
   let ?op = "\<phi>\<^sub>O\<inverse> \<Psi> (\<phi>\<^sub>O \<Psi> op)"
@@ -1313,14 +1313,14 @@ to one SAS+ operator (since the delete effects are being discarded in the transf
 \<close>
 lemma strips_operator_inverse_is:
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)" 
+    and "op' \<in>  ((\<phi> \<Psi>)\<^sub>\<O>)" 
   shows "(\<phi>\<^sub>O \<Psi> (\<phi>\<^sub>O\<inverse> \<Psi> op')) = op'" 
   proof -
     let ?\<Pi> = "\<phi> \<Psi>"
-    obtain op where "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op" 
+    obtain op where "op \<in>  ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op" 
       using assms 
       by auto
-    moreover have "\<phi>\<^sub>O\<inverse> \<Psi> op' = op" 
+    moreover have "(\<phi>\<^sub>O\<inverse> \<Psi> op') = op" 
       using sas_plus_operator_inverse_is[OF assms(1) calculation(1)] calculation(2)
       by blast
     ultimately show ?thesis
@@ -1332,7 +1332,7 @@ lemma strips_operator_inverse_is:
   \<^item> TODO make private. *)
 lemma sas_plus_equivalent_to_strips_i_a_I:
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "set ops' \<subseteq>  ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops'"
     and "op \<in> set [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']" 
   shows "map_of (precondition_of op) \<subseteq>\<^sub>m (\<phi>\<^sub>S\<inverse> \<Psi> (\<phi>\<^sub>S \<Psi> s))" 
@@ -1352,10 +1352,10 @@ proof -
   {
     fix op'
     assume "op' \<in> set ops'" 
-    moreover have "op' \<in> set ((?\<Pi>)\<^sub>\<O>)"
+    moreover have "op' \<in>  ((?\<Pi>)\<^sub>\<O>)"
       using assms(2) calculation 
       by blast
-    ultimately have "\<exists>op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+). op' = (\<phi>\<^sub>O \<Psi> op)" 
+    ultimately have "\<exists>op \<in>  ((\<Psi>)\<^sub>\<O>\<^sub>+). op' = (\<phi>\<^sub>O \<Psi> op)" 
       by auto
   } note nb\<^sub>2 = this
   {
@@ -1364,13 +1364,13 @@ proof -
     then obtain op' where "op' \<in> set ops'" and "op = \<phi>\<^sub>O\<inverse> \<Psi> op'" 
       using assms(4) 
       by auto
-    moreover obtain op'' where "op'' \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
+    moreover obtain op'' where "op'' \<in>  ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
       using nb\<^sub>2 calculation(1)
       by blast
     moreover have "op = op''"
       using sas_plus_operator_inverse_is[OF assms(1) calculation(3)] calculation(2, 4)  
       by blast
-    ultimately have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    ultimately have "op \<in>  ((\<Psi>)\<^sub>\<O>\<^sub>+)"
       by blast
   } note nb\<^sub>3 = this
   {
@@ -1398,7 +1398,7 @@ proof -
       unfolding are_all_operators_applicable_set
       by blast
     moreover {
-      obtain op where "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op" 
+      obtain op where "op \<in>  ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op" 
         using nb\<^sub>2 calculation(1) 
         by blast
       moreover have "strips_operator.precondition_of op' = precondition_of op" 
@@ -1440,7 +1440,7 @@ proof -
       using map_of_SomeD calculation
       by fast
     moreover {
-      have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+      have "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
         using assms(4) nb\<^sub>3
         by blast
       then have "is_valid_operator_sas_plus \<Psi> op" 
@@ -1472,18 +1472,18 @@ qed
 
 lemma to_sas_plus_list_of_transformed_sas_plus_problem_operators_structure:
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "set ops' \<subseteq>  ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "op \<in> set [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']" 
-  shows "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+) \<and> (\<exists>op' \<in> set ops'. op' = \<phi>\<^sub>O \<Psi> op)"
+  shows "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+) \<and> (\<exists>op' \<in> set ops'. op' = \<phi>\<^sub>O \<Psi> op)"
 proof - 
   let ?\<Pi> = "\<phi> \<Psi>"
   obtain op' where "op' \<in> set ops'" and "op = \<phi>\<^sub>O\<inverse> \<Psi> op'" 
     using assms(3) 
     by auto
-  moreover have "op' \<in> set ((?\<Pi>)\<^sub>\<O>)"
+  moreover have "op' \<in>  ((?\<Pi>)\<^sub>\<O>)"
     using assms(2) calculation(1) 
     by blast
-  moreover obtain op'' where "op'' \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
+  moreover obtain op'' where "op'' \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
     using calculation(3) 
     by auto
   moreover have "op = op''" 
@@ -1576,8 +1576,8 @@ proof -
   {
     fix op\<^sub>1 op\<^sub>2
     assume op\<^sub>1_in_ops: "op\<^sub>1 \<in> set ?ops" and op\<^sub>2_in_ops: "op\<^sub>2 \<in> set ?ops" 
-    moreover have op\<^sub>1_in_operators_of_\<Psi>: "op\<^sub>1 \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
-      and op\<^sub>2_in_operators_of_\<Psi>: "op\<^sub>2 \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    moreover have op\<^sub>1_in_operators_of_\<Psi>: "op\<^sub>1 \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+      and op\<^sub>2_in_operators_of_\<Psi>: "op\<^sub>2 \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
       using to_sas_plus_list_of_transformed_sas_plus_problem_operators_structure[OF 
           assms(1, 2)] calculation
       by blast+
@@ -1691,7 +1691,7 @@ proof -
     moreover obtain op where "op \<in> set ?ops" and "op = \<phi>\<^sub>O\<inverse> \<Psi> op'" 
       using calculation
       by force
-    moreover obtain op'' where "op'' \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
+    moreover obtain op'' where "op'' \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
       using assms(4) calculation(1) 
       by auto
     moreover have "is_valid_operator_sas_plus \<Psi> op''" 
@@ -1797,7 +1797,7 @@ proof -
     moreover obtain op where "op \<in> set ?ops" and "op = \<phi>\<^sub>O\<inverse> \<Psi> op'" 
       using calculation
       by force
-    moreover obtain op'' where "op'' \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
+    moreover obtain op'' where "op'' \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
       using assms(4) calculation(1) 
       by auto
     moreover have "is_valid_operator_sas_plus \<Psi> op''" 
@@ -2036,17 +2036,17 @@ lemma transfom_sas_plus_problem_to_strips_problem_operators_valid:
   assumes "is_valid_problem_sas_plus \<Psi>" 
     and "op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
   obtains op 
-  where "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+  where "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
     and "op' = (\<phi>\<^sub>O \<Psi> op)" "is_valid_operator_sas_plus \<Psi> op" 
 proof -
   {
-    obtain op where "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op" 
+    obtain op where "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op" 
       using assms 
       by auto
     moreover have "is_valid_operator_sas_plus \<Psi> op" 
       using is_valid_problem_sas_plus_then(2) assms(1) calculation(1)
       by auto
-    ultimately have "\<exists>op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+). op' = (\<phi>\<^sub>O \<Psi> op)
+    ultimately have "\<exists>op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+). op' = (\<phi>\<^sub>O \<Psi> op)
       \<and> is_valid_operator_sas_plus \<Psi> op"
       by blast
   } 
@@ -2069,7 +2069,7 @@ proof -
   let ?t = "?s' ++ map_of (effect_to_assignments op')"
     and ?t' = "\<phi>\<^sub>S \<Psi> (s ++ map_of (effect_of (\<phi>\<^sub>O\<inverse> \<Psi> op')))"
   obtain op where op'_is: "op' = (\<phi>\<^sub>O \<Psi> op)" 
-    and op_in_ops: "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    and op_in_ops: "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
     and is_valid_operator_op: "is_valid_operator_sas_plus \<Psi> op"
     using transfom_sas_plus_problem_to_strips_problem_operators_valid[OF assms]
     by auto
@@ -2700,19 +2700,19 @@ proof -
         moreover have "op' \<in> set ((?\<Pi>)\<^sub>\<O>)"
           using nb\<^sub>1 calculation(2)
           by blast
-        moreover obtain op'' where "op'' \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
+        moreover obtain op'' where "op'' \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
           using calculation(4) 
           by auto
         moreover have "op = op''" 
           using sas_plus_operator_inverse_is[OF assms(1) calculation(5)] calculation(3, 6) 
           by presburger
-        ultimately have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+) \<and> (\<exists>op' \<in> set ops'. op' = \<phi>\<^sub>O \<Psi> op)" 
+        ultimately have "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+) \<and> (\<exists>op' \<in> set ops'. op' = \<phi>\<^sub>O \<Psi> op)" 
           by blast
       } note nb\<^sub>2 = this
       {
         fix op v a
-        assume "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "(v, a) \<in> set (effect_of op)" 
-        moreover have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+        assume "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "(v, a) \<in> set (effect_of op)" 
+        moreover have "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
           using nb\<^sub>2 calculation(1)
           by blast
         moreover have "is_valid_operator_sas_plus \<Psi> op"
@@ -2725,7 +2725,7 @@ proof -
       {
         fix op
         assume "op \<in> set ?ops" 
-        then have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+        then have "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
           using nb\<^sub>2 
           by blast
         then have "is_valid_operator_sas_plus \<Psi> op"
@@ -2928,9 +2928,9 @@ proof -
     then have "op' \<in> set (strips_problem.operators_of ?\<Pi>)"
       using is_parallel_solution_for_problem_operator_set[OF assms(2)]
       by simp
-    then obtain op where "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = (\<phi>\<^sub>O \<Psi> op)" 
+    then obtain op where "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = (\<phi>\<^sub>O \<Psi> op)" 
       by auto
-    then have "(\<phi>\<^sub>O\<inverse> \<Psi> op') \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    then have "(\<phi>\<^sub>O\<inverse> \<Psi> op') \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
       using sas_plus_operator_inverse_is[OF assms(1)]
       by presburger
   }
@@ -2975,7 +2975,7 @@ qed
 
 private lemma strips_equivalent_to_sas_plus_i_a_I:
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    and "\<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
     and "op' \<in> set [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]"
   obtains op where "op \<in> set ops" 
     and "op' = \<phi>\<^sub>O \<Psi> op"
@@ -2992,7 +2992,7 @@ qed
 
 private corollary strips_equivalent_to_sas_plus_i_a_II:
   assumes"is_valid_problem_sas_plus \<Psi>"
-    and "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    and "\<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
     and "op' \<in> set [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]"
   shows "op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "is_valid_operator_strips (\<phi> \<Psi>) op'"
@@ -3020,13 +3020,13 @@ qed
 (* TODO make private *)
 lemma strips_equivalent_to_sas_plus_i_a_III:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-    and "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    and "\<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
   shows "execute_parallel_operator (\<phi>\<^sub>S \<Psi> s) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]
     = (\<phi>\<^sub>S \<Psi> (execute_parallel_operator_sas_plus s ops))"
 proof -
   {
     fix op s
-    assume "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    assume "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
     moreover have "(\<phi>\<^sub>O \<Psi> op) \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
       using calculation 
       by simp
@@ -3078,7 +3078,7 @@ qed
 
 private lemma strips_equivalent_to_sas_plus_i_a_IV:
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    and "\<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
     and "are_all_operators_applicable_in I ops 
     \<and> are_all_operator_effects_consistent ops"
   shows "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> I) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]
@@ -3295,7 +3295,7 @@ qed
 
 private lemma strips_equivalent_to_sas_plus_i_a_V:
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    and "\<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
     and "\<not>(are_all_operators_applicable_in s ops 
     \<and> are_all_operator_effects_consistent ops)"
   shows "\<not>(STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]
@@ -3314,7 +3314,7 @@ proof -
   {
     fix op
     assume "op \<in> set ops" 
-    then have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+    then have "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
       using assms(2) 
       by blast
     then have "is_valid_operator_sas_plus \<Psi> op"
@@ -3473,7 +3473,7 @@ lemma strips_equivalent_to_sas_plus_i_a:
     and "\<forall>v \<in> dom I. the (I v) \<in> \<R>\<^sub>+ \<Psi> v" 
     and "dom G \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)" 
     and "\<forall>v \<in> dom G. the (G v) \<in> \<R>\<^sub>+ \<Psi> v" 
-    and "\<forall>ops \<in> set \<psi>. \<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    and "\<forall>ops \<in> set \<psi>. \<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
     and "G \<subseteq>\<^sub>m execute_parallel_plan_sas_plus I \<psi>" 
   shows "(\<phi>\<^sub>S \<Psi> G) \<subseteq>\<^sub>m execute_parallel_plan (\<phi>\<^sub>S \<Psi> I) (\<phi>\<^sub>P \<Psi> \<psi>)" 
 proof -
@@ -3529,7 +3529,7 @@ proof -
               sasp_op_to_strips_def
               SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
             by simp
-          moreover have "\<forall>op \<in> set ops. op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
+          moreover have "\<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
             using Cons.prems(6)
             by simp
           moreover have "STRIPS_Prime_Semantics.are_all_operators_applicable ?I' ?ops'" 
@@ -3710,7 +3710,7 @@ proof -
   {
     fix ops op op'
     assume "ops \<in> set \<psi>" and "op \<in> set ops" 
-    moreover have "op \<in> set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+    moreover have "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
       using is_parallel_solution_for_problem_plan_operator_set[OF assms(2)] 
         calculation
       by blast
@@ -4324,7 +4324,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
   assumes "is_valid_problem_sas_plus \<Psi>"
   shows "finite (bounded_solution_set_sas_plus' \<Psi> k)"
 proof -
-  let ?Ops = "set ((\<Psi>)\<^sub>\<O>\<^sub>+)"
+  let ?Ops = "((\<Psi>)\<^sub>\<O>\<^sub>+)"
   let ?Sol\<^sub>k = "bounded_solution_set_sas_plus' \<Psi> k"
     and ?P\<^sub>k = "{ \<pi>. set \<pi> \<subseteq> ?Ops \<and> length \<pi> = k }"
   {

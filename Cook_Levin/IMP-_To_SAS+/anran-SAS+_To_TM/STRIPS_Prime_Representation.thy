@@ -133,9 +133,10 @@ definition elem_from_set :: "'a set \<Rightarrow> 'a" where
 "
   elem_from_set s = (THE x. x\<in>s)
 "
+term The
 (* alternative: elem_from_set s = (THE x. x\<in>s) *)
 (* alternative: elem_from_set s = Finite_Set.fold (\<lambda>x. \<lambda>y. x) (undefined) s*)
-
+find_theorems name:Finite_Set.fold 
 lemma "elem_from_set {True} = True " 
   apply (auto simp: elem_from_set_def Finite_Set.fold_def)
   by (smt (z3) fold_graph.cases fold_graph.emptyI fold_graph.insertI insertCI singletonD the_equality) 

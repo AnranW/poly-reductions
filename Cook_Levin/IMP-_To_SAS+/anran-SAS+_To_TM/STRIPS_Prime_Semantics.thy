@@ -298,7 +298,7 @@ lemma map_of_constant_assignments_dom:
     ultimately show ?thesis
       by argo
   qed
-thm_deps map_of_constant_assignments_dom
+
 lemma effect__strips_iii_a:
   assumes "s' = (s \<then> op)"
   shows "\<And>v. v \<in> set (add_effects_of op) \<Longrightarrow> s' v = Some True"
