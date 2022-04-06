@@ -33,6 +33,15 @@ definition state_to_strips_state
       map_of_set ( (\<lambda>(v, a). ((v, a), the (s v) = a)) `
         (\<Union> (possible_assignments_for \<Psi>`( set defined))))"
 
+(* lemma strips_state_unique: 
+  assumes "s_strip = state_to_strips_state \<Psi> s" and "s_strip (x,y) = Some True"
+  shows "is_singleton {(x,y) |x y. s_strip (x,y) = Some True}"
+proof -
+  let ?defined = "filter (\<lambda>v. s v \<noteq> None) (variables_of \<Psi>)"
+  have "ListMem x ?defined" using assms state_to_strips_state_def possible_assignments_for_def
+    apply (auto simp: state_to_strips_state_def possible_assignments_for_def map_of_set_def)
+     *)
+  
 (* 
   type precondition_of: list of (variable,value) tuples, in sas+
   type pre: list of variables, in strips 
@@ -317,8 +326,8 @@ lemma map_of_set_from_function_graph_is_some_if:
   shows "(map_of_set ( (\<lambda>x. (x, f x))` xs)) x = Some (f x)"  
   using assms 
   unfolding map_of_set_def elem_from_set_def image_def Finite_Set.fold_def
-  apply (auto simp add:elem_from_set_def)  
-  by (smt (verit, ccfv_threshold) empty_iff fold_graph.simps insertE insertI1 prod.sel(2) the_equality)
+  by (auto simp add:elem_from_set_def)  
+  (* by (smt (verit, ccfv_threshold) empty_iff fold_graph.simps insertE insertI1 prod.sel(2) the_equality) *)
     
 lemma state_to_strips_state_range_is:
   assumes "is_valid_problem_sas_plus \<Psi>" 
@@ -819,22 +828,57 @@ proof -
     by (simp add: dom_map_of_set_conv_image_fst)
 qed
 
-(* context 
-  fixes k b\<^sub>1 xs and a\<^sub>1::'a and a\<^sub>2::'a and y and a\<^sub>3::'a
-  assumes f1:"k = b\<^sub>1" and
- f2: "   xs = {(b\<^sub>1, a\<^sub>1), (b\<^sub>1, a\<^sub>2)}" and
-f3: "    y = a\<^sub>3"
-begin
-lemma  "map_of_set xs k = Some y "
-  apply (simp add: f1 f2 f3 map_of_set_def elem_from_set_def)
-end *)
+lemma elem_from_set_unique: 
+  assumes "is_singleton x" "elem_from_set x = a" 
+  shows "x={a}" 
+  by (metis assms(1) assms(2) elem_from_set_def is_singleton_the_elem singleton_iff the_equality)
 
 (* HERE! *)
-(* lemma map_of_set_SomeD: "map_of_set xs k = Some y \<Longrightarrow> (k, y) \<in>  xs"
-  nitpick
-  unfolding map_of_set_def elem_from_set_def
-  sorry
- *)
+lemma map_of_set_unique: 
+  fixes v x a
+  assumes "\<forall>(v,a)\<in>x. \<forall>a'. (v,a')\<in>x \<longrightarrow> a=a'" "map_of_set x v = Some a"
+  shows "(v, a) \<in> x" 
+proof -
+  from assms have 1: "v\<in>fst`x" using map_of_set_def 
+    by (metis option.distinct(1))
+  with assms have 2: "a = snd (elem_from_set {(v,b) |b. (v, b) \<in> x})" using map_of_set_def      
+    by (metis (mono_tags, lifting) option.inject)
+  from 1 assms(1) have "is_singleton {(v, b)|b. (v, b) \<in> x}"
+    by (smt (verit) case_prodE empty_iff imageE is_singletonI' mem_Collect_eq prod.sel(1))
+  with 2 have "{(v, b)|b. (v, b) \<in> x}={(v,a)}" using elem_from_set_unique
+    by (smt (verit, del_insts) mem_Collect_eq prod.collapse prod.inject singletonI)
+  thus ?thesis using assms(1) 1 by force
+qed
+(* HERE! *)
+lemma map_of_set_unique': 
+  fixes v x a
+  assumes "\<forall>a'. (v,a')\<in>x \<longrightarrow> a=a'" "map_of_set x v = Some a"
+  shows "(v, a) \<in> x" 
+proof -
+  from assms have 1: "v\<in>fst`x" using map_of_set_def 
+    by (metis option.distinct(1))
+  with assms have 2: "a = snd (elem_from_set {(v,b) |b. (v, b) \<in> x})" using map_of_set_def      
+    by (metis (mono_tags, lifting) option.inject)
+  thus ?thesis using assms(1) 1 by force
+qed
+
+lemma map_of_set_constant_assignments_defined_if:
+  assumes "\<forall>(v, a) \<in>  l. \<forall>(v', a') \<in>  l. v \<noteq> v' \<or> a = a'"
+    and "(v, a) \<in>  l" 
+  shows "map_of_set l v = Some a" 
+  using assms
+proof - 
+  from assms(2) have "v\<in>fst`l"
+    by (metis Domain.intros Domain_fst)
+  then have 1:"map_of_set l v = Some (snd (elem_from_set {(v,b)|b. (v,b)\<in>l}))"
+    by (simp add: map_of_set_def)
+  from assms have "is_singleton {(v,b)|b. (v,b)\<in>l}"
+    by (smt (z3) case_prodD empty_iff is_singletonI' mem_Collect_eq)
+  with assms(2) have "elem_from_set {(v,b)|b. (v,b)\<in>l} = (v,a)" 
+    by (smt (verit, ccfv_SIG) elem_from_set_unique emptyE insertE mem_Collect_eq)
+  thus ?thesis using map_of_set_def 1 by force
+qed
+
 lemma strips_state_to_state_range_is:
   assumes "is_valid_problem_sas_plus \<Psi>" 
     and "v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
@@ -849,20 +893,18 @@ proof -
     and ?s = "\<phi>\<^sub>S\<inverse> \<Psi> s'"
   let ?as = "all_possible_assignments_for \<Psi>"
   let ?l = "Set.filter (\<lambda>(v, a). s' (v, a) = Some True) ?as"
+  from assms(5) have l_unique:"\<forall>(v,a)\<in>?l. \<forall>a'. (v,a')\<in>?l \<longrightarrow> a=a'"
+    by fastforce
   show ?thesis 
     proof (rule iffI)
       assume s_of_v_is_Some_a: "?s v = Some a" 
       {
-        have "(v, a) \<in>  ?l" 
-          using s_of_v_is_Some_a 
-          unfolding SAS_Plus_Prime_STRIPS_Prime.strips_state_to_state_def 
-            strips_state_to_state_def 
-          using map_of_SomeD
-          
-          by fast
-        hence "s' (v, a) = Some True"
+        then have 1:"map_of_set ?l v = Some a" using strips_state_to_state_def by metis
+        with 1 have "(v, a) \<in>  ?l" 
+          using l_unique map_of_set_unique by fastforce
+          hence "s' (v, a) = Some True"
           unfolding all_possible_assignments_for_set_is set_filter
-          by blast
+          by auto
       }
       thus "the (s' (v, a))"
         by simp
@@ -874,7 +916,7 @@ proof -
       \<comment> \<open> TODO slow. \<close>
       moreover {
         fix v v' a a'
-        assume "(v, a) \<in> set ?l" and "(v', a') \<in> set ?l"
+        assume "(v, a) \<in> ?l" and "(v', a') \<in> ?l"
         then have "v \<noteq> v' \<or> a = a'" 
         using assms(5)
         by fastforce
@@ -885,16 +927,16 @@ proof -
             range_of_not_empty 
           by force
         (* TODO slow. *)
-        moreover have "set ?l = Set.filter (\<lambda>(v, a). s' (v, a) = Some True) 
+        moreover have " ?l = Set.filter (\<lambda>(v, a). s' (v, a) = Some True) 
           (\<Union>v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+). { (v, a) | a.  a \<in> \<R>\<^sub>+ \<Psi> v })"
           using all_possible_assignments_for_set_is calculation
           by force
-        ultimately have "(v, a) \<in> set ?l" 
+        ultimately have "(v, a) \<in> ?l" 
           using assms(2, 3) s'_of_v_a_is_Some_true
           by simp
       }
-      ultimately show "?s v = Some a"  
-        using map_of_constant_assignments_defined_if[of ?l v a]
+      ultimately show "?s v = Some a" 
+        using map_of_set_constant_assignments_defined_if[of ?l v a]
         unfolding SAS_Plus_Prime_STRIPS_Prime.strips_state_to_state_def
           strips_state_to_state_def
         by blast
