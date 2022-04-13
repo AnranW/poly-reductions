@@ -1500,7 +1500,7 @@ lemma sas_plus_equivalent_to_strips_i_a_II:
   fixes \<Psi> :: "('variable, 'domain) sas_plus_problem"
   fixes s :: "('variable, 'domain) state" 
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "set ops' \<subseteq>  ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>s \<Psi> s) ops' 
       \<and> STRIPS_Prime_Semantics.are_all_operator_effects_consistent ops'"
   shows "are_all_operator_effects_consistent [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']" 
@@ -1559,7 +1559,7 @@ proof -
             using is_valid_operator_sas_plus_then is_valid_op\<^sub>2 calculation(3)
             by fastforce
         }
-        moreover have "(v, a') \<in> set (delete_effects_of op\<^sub>1')" 
+        moreover have "(v, a') \<in> (delete_effects_of op\<^sub>1')" 
           using sasp_op_to_strips_set_delete_effects_is
             op\<^sub>1'_is is_valid_op\<^sub>1 calculation(3, 4, 5, 6)
           by blast
@@ -1623,7 +1623,7 @@ no two assignments of the same variable to different values exist). \<close>
   \<^item> TODO decrement suffix *)
 lemma sas_plus_equivalent_to_strips_i_a_IV: 
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "set ops' \<subseteq> ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops' 
       \<and> STRIPS_Prime_Semantics.are_all_operator_effects_consistent ops'"
   shows "are_all_operators_applicable_in (\<phi>\<^sub>S\<inverse> \<Psi> (\<phi>\<^sub>S \<Psi> s)) [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops'] \<and>
@@ -1674,7 +1674,7 @@ lemma sas_plus_equivalent_to_strips_i_a_VI:
   assumes "is_valid_problem_sas_plus \<Psi>"
     and "dom s \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
     and "\<forall>v \<in> dom s. the (s v) \<in> \<R>\<^sub>+ \<Psi> v" 
-    and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "set ops' \<subseteq> ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "are_all_operators_applicable_in s [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops'] \<and>
       are_all_operator_effects_consistent [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']"  
   shows "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops'"
@@ -1781,7 +1781,7 @@ lemma sas_plus_equivalent_to_strips_i_a_VII:
   assumes "is_valid_problem_sas_plus \<Psi>"
     and "dom s \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)" 
     and "\<forall>v \<in> dom s. the (s v) \<in> \<R>\<^sub>+ \<Psi> v" 
-    and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "set ops' \<subseteq> ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "are_all_operators_applicable_in s [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops'] \<and>
     are_all_operator_effects_consistent [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']"  
   shows "STRIPS_Prime_Semantics.are_all_operator_effects_consistent ops'"
@@ -1815,7 +1815,7 @@ proof -
     fix op\<^sub>1' op\<^sub>2'
     assume "op\<^sub>1' \<in> set ops'" 
       and "op\<^sub>2' \<in> set ops'" 
-      and "\<exists>(v, a) \<in> set (add_effects_of op\<^sub>1'). \<exists>(v', a') \<in> set (delete_effects_of op\<^sub>2').
+      and "\<exists>(v, a) \<in> set (add_effects_of op\<^sub>1'). \<exists>(v', a') \<in>  (delete_effects_of op\<^sub>2').
         (v, a) = (v', a')" 
     moreover obtain op\<^sub>1 op\<^sub>2
       where "op\<^sub>1 \<in> set ?ops" 
@@ -1828,7 +1828,7 @@ proof -
       by meson
     moreover obtain v v' a a' 
       where "(v, a) \<in> set (add_effects_of op\<^sub>1')" 
-        and "(v', a') \<in> set (delete_effects_of op\<^sub>2')"
+        and "(v', a') \<in>  (delete_effects_of op\<^sub>2')"
         and "(v, a) = (v', a')" 
       using calculation
       by blast
@@ -1886,9 +1886,9 @@ proof -
       proof (rule ccontr)
         assume "\<not>STRIPS_Prime_Semantics.are_operator_effects_consistent op\<^sub>1' op\<^sub>2'"
         then consider (A) "\<exists>(v, a) \<in> set (add_effects_of op\<^sub>1'). 
-          \<exists>(v', a') \<in> set (delete_effects_of op\<^sub>2'). (v, a) = (v', a')"
+          \<exists>(v', a') \<in>  (delete_effects_of op\<^sub>2'). (v, a) = (v', a')"
           | (B) "\<exists>(v, a) \<in> set (add_effects_of op\<^sub>2'). 
-          \<exists>(v', a') \<in> set (delete_effects_of op\<^sub>1'). (v, a) = (v', a')"
+          \<exists>(v', a') \<in>  (delete_effects_of op\<^sub>1'). (v, a) = (v', a')"
           unfolding STRIPS_Prime_Semantics.are_operator_effects_consistent_def list_ex_iff
           by fastforce
         thus False 
@@ -1906,7 +1906,7 @@ lemma sas_plus_equivalent_to_strips_i_a_VIII:
   assumes "is_valid_problem_sas_plus \<Psi>"
     and "dom s \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)" 
     and "\<forall>v \<in> dom s. the (s v) \<in> \<R>\<^sub>+ \<Psi> v" 
-    and "set ops' \<subseteq> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "set ops' \<subseteq> ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "are_all_operators_applicable_in s [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops'] \<and>
     are_all_operator_effects_consistent [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']"  
   shows "STRIPS_Prime_Semantics.are_all_operators_applicable (\<phi>\<^sub>S \<Psi> s) ops' 
@@ -1962,10 +1962,10 @@ holds, the domain value constraint will also hold on the resultant state. \<clos
 lemma sas_plus_equivalent_to_strips_i_a_X:
   assumes "dom s \<subseteq> V"
     and "V \<subseteq> dom D"
-    and "\<forall>v \<in> dom s. the (s v) \<in> set (the (D v))" 
-    and "\<forall>op \<in> set ops. \<forall>(v, a) \<in> set (effect_of op). v \<in> V \<and> a \<in> set (the (D v))" 
+    and "\<forall>v \<in> dom s. the (s v) \<in>  (the (D v))" 
+    and "\<forall>op \<in> set ops. \<forall>(v, a) \<in> set (effect_of op). v \<in> V \<and> a \<in>  (the (D v))" 
   shows "\<forall>v \<in> dom (execute_parallel_operator_sas_plus s ops). 
-    the (execute_parallel_operator_sas_plus s ops v) \<in> set (the (D v))"  
+    the (execute_parallel_operator_sas_plus s ops v) \<in>  (the (D v))"  
 proof -
   show ?thesis 
     using assms
@@ -1993,7 +1993,7 @@ proof -
         moreover {
           fix v
           assume v_in_dom_s': "v \<in> dom ?s'"
-          hence "the (?s' v) \<in> set (the (D v))" 
+          hence "the (?s' v) \<in>  (the (D v))" 
             proof (cases "v \<in> dom (map_of (effect_of op))")
               case True
               moreover have "?s' v = (map_of (effect_of op)) v"
@@ -2005,7 +2005,7 @@ proof -
               moreover have "(v, a) \<in> set (effect_of op)" 
                 using map_of_SomeD calculation(3)
                 by fast
-              moreover have "a \<in> set (the (D v))"
+              moreover have "a \<in>  (the (D v))"
                 using Cons.prems(4) calculation(4)
                 by fastforce
               ultimately show ?thesis
@@ -2018,11 +2018,11 @@ proof -
                 by fast
             qed
         }
-        moreover have "\<forall>op \<in> set ops. \<forall>(v, a) \<in> set (effect_of op). v \<in> V \<and> a \<in> set (the (D v))" 
+        moreover have "\<forall>op \<in> set ops. \<forall>(v, a) \<in> set (effect_of op). v \<in> V \<and> a \<in>  (the (D v))" 
           using Cons.prems(4)
           by auto
         ultimately have "\<forall>v \<in> dom (execute_parallel_operator_sas_plus ?s' ops).
-          the (execute_parallel_operator_sas_plus ?s' ops v) \<in> set (the (D v))" 
+          the (execute_parallel_operator_sas_plus ?s' ops v) \<in>  (the (D v))" 
           using Cons.IH[of "s ++ map_of (effect_of op)", OF _ Cons.prems(2)]
           by meson
       }
@@ -2034,7 +2034,7 @@ qed
 
 lemma transfom_sas_plus_problem_to_strips_problem_operators_valid:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-    and "op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"
   obtains op 
   where "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)"
     and "op' = (\<phi>\<^sub>O \<Psi> op)" "is_valid_operator_sas_plus \<Psi> op" 
@@ -2055,10 +2055,26 @@ proof -
     by blast
 qed
 
+(* HERE!*)
+lemma map_of_set_defined_if_constructed_from_list_of_constant_assignments:
+  "l = set (map (\<lambda>x. (x, a)) xs) \<Longrightarrow> \<forall>x \<in> set xs. (map_of_set l) x = Some a" 
+  by (simp add: map_of_set_constant_assignments_defined_if)
+
+(* HERE! *) 
+lemma map_of_set_defined_if_constructed_from_list_of_constant_assignments_ii:
+  "l =  (\<lambda>x. (x, a)) ` xs \<Longrightarrow> \<forall>x \<in> xs. (map_of_set l) x = Some a" 
+proof-
+  assume 1:"l =  (\<lambda>x. (x, a)) ` xs"
+  then have "\<forall>x\<in>xs. x\<in>fst`l" by force
+  with 1 show ?thesis unfolding map_of_set_def
+    using elem_from_set_def
+    by (smt (verit, del_insts) Pair_inject elem_from_set_unique emptyE imageE imageE insertE is_singletonI' mem_Collect_eq prod.exhaust_sel)
+qed
+
 lemma sas_plus_equivalent_to_strips_i_a_XI:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-    and "op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)" 
-  shows "(\<phi>\<^sub>S \<Psi> s) ++ map_of (effect_to_assignments op') 
+    and "op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"                      
+  shows "(\<phi>\<^sub>S \<Psi> s) ++ map_of_set (effect_to_assignments op') 
     = \<phi>\<^sub>S \<Psi> (s ++ map_of (effect_of (\<phi>\<^sub>O\<inverse> \<Psi> op')))"
 proof -
   let ?\<Pi> = "\<phi> \<Psi>" 
@@ -2066,7 +2082,7 @@ proof -
     and?ops = "operators_of \<Psi>" 
     and ?ops' = "strips_problem.operators_of ?\<Pi>"
   let ?s' = "\<phi>\<^sub>S \<Psi> s"                 
-  let ?t = "?s' ++ map_of (effect_to_assignments op')"
+  let ?t = "?s' ++ map_of_set (effect_to_assignments op')"
     and ?t' = "\<phi>\<^sub>S \<Psi> (s ++ map_of (effect_of (\<phi>\<^sub>O\<inverse> \<Psi> op')))"
   obtain op where op'_is: "op' = (\<phi>\<^sub>O \<Psi> op)" 
     and op_in_ops: "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
@@ -2078,23 +2094,21 @@ proof -
     by blast
   \<comment> \<open> TODO refactor. \<close>
   {
-
-    (*have "fst ` set (effect_to_assignments op') \<equiv>
-fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. (v, False)) ` set (delete_effects_of op'))"
-      
-      by auto
-    then*) have "dom (map_of (effect_to_assignments op')) 
-      = set (strips_operator.add_effects_of op') \<union> set (strips_operator.delete_effects_of op')"
-      unfolding dom_map_of_conv_image_fst
+    have "dom (map_of_set (effect_to_assignments op')) = fst ` (effect_to_assignments op')"
+      using dom_map_of_set_conv_image_fst by metis
+    also have "fst ` (effect_to_assignments op') =
+fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. (v, False)) `  (delete_effects_of op'))"
+      by (simp add: effect__strips_def effect_to_assignments_def)
+    also have "\<dots> = set (strips_operator.add_effects_of op') \<union> (strips_operator.delete_effects_of op')"
       by force
-    \<comment> \<open> TODO slow.\<close>
-    also have "\<dots> = set (effect_of op) \<union> set (strips_operator.delete_effects_of op')" 
+        \<comment> \<open> TODO slow.\<close>
+    also have "\<dots> = set (effect_of op) \<union> (strips_operator.delete_effects_of op')" 
       using op'_is 
       unfolding SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def
         sasp_op_to_strips_def 
       by auto
     \<comment> \<open> TODO slow.\<close>
-    finally have "dom (map_of (effect_to_assignments op')) = set (effect_of op)
+    finally have "dom (map_of_set (effect_to_assignments op')) = set (effect_of op)
       \<union> (\<Union>(v, a) \<in> set (effect_of op). { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })" 
       using sasp_op_to_strips_set_delete_effects_is[OF 
           is_valid_operator_op] op'_is
@@ -2123,7 +2137,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
       sasp_op_to_strips_def
     by auto
   \<comment> \<open> TODO refactor. \<close>
-  have nb\<^sub>7: "set (delete_effects_of op') = (\<Union>(v, a) \<in> set (effect_of op). 
+  have nb\<^sub>7: " (delete_effects_of op') = (\<Union>(v, a) \<in> set (effect_of op). 
       { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })" 
     using sasp_op_to_strips_set_delete_effects_is[OF 
         is_valid_operator_op] op'_is
@@ -2137,17 +2151,17 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
       unfolding dom_map_of_conv_image_fst set_map image_comp comp_apply 
       using nb\<^sub>6
       by simp
-    have dom_delete: "dom (map_of (map (\<lambda>v. (v, False)) (delete_effects_of op'))) = ?Delete"
-      unfolding dom_map_of_conv_image_fst set_map image_comp comp_apply 
+    have dom_delete: "dom (map_of_set ( (\<lambda>v. (v, False))` (delete_effects_of op'))) = ?Delete"
+      unfolding dom_map_of_set_conv_image_fst set_map image_comp comp_apply 
       using nb\<^sub>7
-      by auto
+      by simp
     {
       {
         fix v a 
         assume v_a_in_dom_add: "(v, a) \<in> dom (map_of (map (\<lambda>v. (v, True)) (add_effects_of op')))"
-        have "(v, a) \<notin> dom (map_of (map (\<lambda>v. (v, False)) (delete_effects_of op')))" 
+        have "(v, a) \<notin> dom (map_of_set ( (\<lambda>v. (v, False))` (delete_effects_of op')))" 
           proof (rule ccontr) 
-            assume "\<not>((v, a) \<notin> dom (map_of (map (\<lambda>v. (v, False)) (delete_effects_of op'))))"
+            assume "\<not>((v, a) \<notin> dom (map_of_set ((\<lambda>v. (v, False)) `(delete_effects_of op'))))"
             then have "(v, a) \<in> ?Delete" and "(v, a) \<in> ?Add"
               using dom_add dom_delete v_a_in_dom_add
               by argo+   
@@ -2161,15 +2175,15 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
           qed
       }
       hence "disjnt (dom (map_of (map (\<lambda>v. (v, True)) (add_effects_of op')))) 
-        (dom (map_of (map (\<lambda>v. (v, False)) (delete_effects_of op'))))"
+        (dom (map_of_set ( (\<lambda>v. (v, False))` (delete_effects_of op'))))"
         unfolding disjnt_def Int_def
         using nb\<^sub>7
         by simp
     }
     hence "dom (map_of (map (\<lambda>v. (v, True)) (add_effects_of op'))) = ?Add"
-      and "dom (map_of (map (\<lambda>v. (v, False)) (delete_effects_of op'))) = ?Delete"
+      and "dom (map_of_set ((\<lambda>v. (v, False))` (delete_effects_of op'))) = ?Delete"
       and "disjnt (dom (map_of (map (\<lambda>v. (v, True)) (add_effects_of op')))) 
-        (dom (map_of (map (\<lambda>v. (v, False)) (delete_effects_of op'))))" 
+        (dom (map_of_set ((\<lambda>v. (v, False))` (delete_effects_of op'))))" 
       using dom_add dom_delete
       by blast+
   } note nb\<^sub>8 = this
@@ -2179,22 +2193,30 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
     let ?Delete = "(\<Union>(v, a) \<in> set (effect_of op). 
       { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })" 
     \<comment> \<open> TODO slow.\<close>
-    have "\<forall>(v, a) \<in> ?Add. map_of (effect_to_assignments op') (v, a) = Some True" 
-      and "\<forall>(v, a) \<in> ?Delete. map_of (effect_to_assignments op') (v, a) = Some False"
+    have "\<forall>(v, a) \<in> ?Add. map_of_set (effect_to_assignments op') (v, a) = Some True" 
+      and "\<forall>(v, a) \<in> ?Delete. map_of_set (effect_to_assignments op') (v, a) = Some False"
       proof -
         {
           fix v a
           assume "(v, a) \<in> ?Add" 
-          hence "map_of (effect_to_assignments op') (v, a) = Some True"
-            unfolding effect_to_assignments_simp
-            using  nb\<^sub>6 map_of_defined_if_constructed_from_list_of_constant_assignments[of 
-                "map (\<lambda>v. (v, True)) (add_effects_of op')" True "add_effects_of op'"]
-            by force
-        }
+          then have inadd:"(v,a)\<in>set (add_effects_of op')" 
+            using nb\<^sub>6 by blast
+          then have notindel:"(v,a)\<notin> delete_effects_of op'"
+            by (simp add: is_valid_operator_op op'_is op_in_ops sasp_op_to_strips_effect_consistent(1))
+          with inadd have single:"{((v, a), b) |b.((v, a), b) \<in> (\<lambda>x. (x, True)) ` set (add_effects_of op') 
+            \<union> (\<lambda>v. (v, False)) ` delete_effects_of op'}={((v,a),True)}" 
+            by auto
+          from inadd have "(v,a)\<in>fst`(effect_to_assignments op')" by force
+          hence "map_of_set (effect_to_assignments op') (v, a) = Some True"
+          unfolding effect_to_assignments_simp map_of_set_def
+          using  nb\<^sub>6 map_of_set_defined_if_constructed_from_list_of_constant_assignments[of 
+              "set (map (\<lambda>v. (v, True)) (add_effects_of op'))" True "add_effects_of op'"] inadd notindel single
+          by (smt (z3) Collect_cong Un_iff dom_def dom_map_of_conv_image_fst list.set_map map_of_set_def mem_Collect_eq nb\<^sub>8(1) setcompr_eq_image singleton_conv)
+          }
         moreover {
           fix v a
           assume "(v, a) \<in> ?Delete"
-          moreover have "(v, a) \<in> dom (map_of (map (\<lambda>v. (v, False)) (delete_effects_of op')))"
+          moreover have "(v, a) \<in> dom (map_of_set ( (\<lambda>v. (v, False))` (delete_effects_of op')))"
             using nb\<^sub>8(2) calculation(1)
             by argo
           moreover have "(v, a) \<notin> dom (map_of (map (\<lambda>v. (v, True)) (add_effects_of op')))" 
@@ -2202,20 +2224,19 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
             unfolding disjnt_def 
             using calculation(1)
             by blast
-          moreover have "map_of (effect_to_assignments op') (v, a) 
-            = map_of (map (\<lambda>v. (v, False)) (delete_effects_of op')) (v, a)"
+          moreover have "map_of_set (effect_to_assignments op') (v, a) 
+            = map_of_set ( (\<lambda>v. (v, False))` (delete_effects_of op')) (v, a)"
             unfolding effect_to_assignments_simp map_of_append 
-            using map_add_dom_app_simps(3)[OF calculation(3)]
-            by presburger 
+            by (smt (z3) Collect_cong Un_iff calculation(3) dom_map_of_set_conv_image_fst effect_to_assignments_ii fst_conv imageE list.set_map map_of_set_def nb\<^sub>2 nb\<^sub>6 nb\<^sub>8(1) nb\<^sub>8(2))
           \<comment> \<open> TODO slow. \<close>
-          ultimately have "map_of (effect_to_assignments op') (v, a) = Some False"
-            using map_of_defined_if_constructed_from_list_of_constant_assignments[
-                of "map (\<lambda>v. (v, False)) (delete_effects_of op')" False "delete_effects_of op'"]
+          ultimately have "map_of_set (effect_to_assignments op') (v, a) = Some False"
+            using map_of_set_defined_if_constructed_from_list_of_constant_assignments_ii[
+                of " (\<lambda>v. (v, False))` (delete_effects_of op')" False "delete_effects_of op'"]
                nb\<^sub>7
             by auto
         }
-        ultimately show "\<forall>(v, a) \<in> ?Add. map_of (effect_to_assignments op') (v, a) = Some True" 
-          and "\<forall>(v, a) \<in> ?Delete. map_of (effect_to_assignments op') (v, a) = Some False" 
+        ultimately show "\<forall>(v, a) \<in> ?Add. map_of_set (effect_to_assignments op') (v, a) = Some True" 
+          and "\<forall>(v, a) \<in> ?Delete. map_of_set (effect_to_assignments op') (v, a) = Some False" 
           by blast+
       qed
   } note nb\<^sub>9 = this
@@ -2243,11 +2264,11 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
           assms(1) 
         by blast
       thm calculation(1) nb\<^sub>6 assms(2)
-      moreover have "set (add_effects_of op') \<subseteq> set ((?\<Pi>)\<^sub>\<V>)" 
+      moreover have "set (add_effects_of op') \<subseteq>  ((?\<Pi>)\<^sub>\<V>)" 
         using assms(2) is_valid_problem_strips_operator_variable_sets(2)
           calculation 
         by blast
-      moreover have "(v, a) \<in> set ((?\<Pi>)\<^sub>\<V>)"
+      moreover have "(v, a) \<in>  ((?\<Pi>)\<^sub>\<V>)"
         using v_a_in_effect_of_op nb\<^sub>6 calculation(2) 
         by blast
       ultimately have "a \<in> \<R>\<^sub>+ \<Psi> v"
@@ -2284,7 +2305,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
   } note nb\<^sub>1\<^sub>2 = this
   {
     fix v a'
-    assume "(v, a') \<in> dom (map_of (effect_to_assignments op'))"   
+    assume "(v, a') \<in> dom (map_of_set (effect_to_assignments op'))"   
       and "(v, a') \<in>  (\<Union>(v, a) \<in> set (effect_of op).
         { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })"
     moreover have "v \<in> dom (map_of (effect_of op))" 
@@ -2321,7 +2342,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
   {
     fix v a
     assume "(v, a) \<in> dom ?t" 
-      and "(v, a) \<notin> dom (map_of (effect_to_assignments op'))"
+      and "(v, a) \<notin> dom (map_of_set (effect_to_assignments op'))"
     moreover have "(v, a) \<in> dom ?s'" 
       using calculation(1, 2)
       unfolding dom_map_add
@@ -2335,7 +2356,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
   {
     fix v a
     assume "(v, a) \<in> dom ?t" 
-      and v_a_not_in: "(v, a) \<notin> dom (map_of (effect_to_assignments op'))"
+      and v_a_not_in: "(v, a) \<notin> dom (map_of_set (effect_to_assignments op'))"
     moreover have "(v, a) \<in> dom ?s'" 
       using calculation(1, 2)
       unfolding dom_map_add
@@ -2349,7 +2370,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
       by blast+
     \<comment> \<open> NOTE Hasn't this been proved before? \<close>
     moreover {
-      have "dom (map_of (effect_to_assignments op')) = (\<Union>(v, a) \<in> set (effect_of op). { (v, a) }) 
+      have "dom (map_of_set (effect_to_assignments op')) = (\<Union>(v, a) \<in> set (effect_of op). { (v, a) }) 
         \<union> (\<Union>(v, a) \<in> set (effect_of op). 
           { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })"
         unfolding nb\<^sub>2
@@ -2357,7 +2378,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
       also have "\<dots> = (\<Union>(v, a) \<in> set (effect_of op). { (v, a) } 
           \<union> { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })" 
         by blast
-      finally have "dom (map_of (effect_to_assignments op')) 
+      finally have "dom (map_of_set (effect_to_assignments op')) 
         = (\<Union>(v, a) \<in> set (effect_of op). { (v, a) } 
           \<union> { (v, a) | a. a \<in> \<R>\<^sub>+ \<Psi> v })"
         by auto
@@ -2396,7 +2417,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
       fix v a
       assume "(v, a) \<in> dom ?t"
       then consider (A) "(v, a) \<in> dom (\<phi>\<^sub>S \<Psi> s)" 
-        | (B) "(v, a) \<in> dom (map_of (effect_to_assignments op'))" 
+        | (B) "(v, a) \<in> dom (map_of_set (effect_to_assignments op'))" 
         by fast
       hence "(v, a) \<in> dom ?t'" 
         proof (cases)
@@ -2415,12 +2436,12 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
           case B
           then have "(v, a) \<in> 
               set (effect_of op) 
-              \<union> (\<Union>(v, a)\<in>set (effect_of op). { (v, a') | a'. a' \<in> \<R>\<^sub>+ \<Psi> v \<and> a' \<noteq> a })" 
+              \<union> (\<Union>(v, a)\<in>set (effect_of op). { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })" 
             unfolding nb\<^sub>2
             by blast
           then consider (B\<^sub>1) "(v, a) \<in> set (effect_of op)" 
             | (B\<^sub>2) "(v, a) \<in> (\<Union>(v, a)\<in>set (effect_of op). 
-            { (v, a') | a'. a' \<in> \<R>\<^sub>+ \<Psi> v \<and> a' \<noteq> a })"
+            { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })"
             by blast
           thm nb\<^sub>1\<^sub>2 nb\<^sub>1\<^sub>3 nb\<^sub>2
           thus ?thesis
@@ -2441,7 +2462,6 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
       let ?u = "s ++ map_of (effect_of (\<phi>\<^sub>O\<inverse> \<Psi> op'))"
       fix v a
       assume v_a_in_dom_t': "(v, a) \<in> dom ?t'"
-      thm nb\<^sub>5
       then have v_in_vs: "v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+)" 
         and u_of_v_is_not_None: "?u v \<noteq> None" 
         and a_in_range_of_v: "a \<in> \<R>\<^sub>+ \<Psi> v" 
@@ -2451,9 +2471,9 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
       {
         assume "(v, a) \<notin> dom ?t" 
         then have contradiction: "(v, a) \<notin> 
-          (\<Union>v \<in> { v | v. v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> s v \<noteq> None}. { (v, a) |a. a \<in> \<R>\<^sub>+ \<Psi> v }) 
-          \<union> set (effect_of op) 
-          \<union> (\<Union>(v, a)\<in>set (effect_of op). {(v, a') |a'. a' \<in> \<R>\<^sub>+ \<Psi> v \<and> a' \<noteq> a})" 
+          ((\<Union>v \<in> { v | v. v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> s v \<noteq> None}. { (v, a) |a. a \<in> \<R>\<^sub>+ \<Psi> v }) 
+          \<union> (set (effect_of op)) 
+          \<union> (\<Union>(v, a)\<in>set (effect_of op). {(v, a') |a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a}))" 
           unfolding nb\<^sub>1\<^sub>6
           by fast
         hence False 
@@ -2491,7 +2511,7 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
               next
                 case False
                 then have "(v, a) \<in> (\<Union>(v, a)\<in>set (effect_of op). 
-                  {(v, a') |a'. a' \<in> \<R>\<^sub>+ \<Psi> v \<and> a' \<noteq> a})" 
+                  {(v, a') |a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a})" 
                   using v_a'_in calculation a_in_range_of_v
                   by blast
                 thus ?thesis
@@ -2518,11 +2538,11 @@ fst ` ((\<lambda>v. (v, True)) ` set (add_effects_of op') \<union> (\<lambda>v. 
     fix v a
     assume v_a_in_dom_t: "(v, a) \<in> dom ?t" 
     hence "?t (v, a) = ?t' (v, a)"
-      proof (cases "(v, a) \<in> dom (map_of (effect_to_assignments op'))")
+      proof (cases "(v, a) \<in> dom (map_of_set (effect_to_assignments op'))")
         case True
         \<comment> \<open> TODO slow. \<close>
         \<comment> \<open> NOTE Split on the (disjunct) domain variable sets of 
-          @{text "map_of (effect_to_assignments op')"}. \<close> 
+          @{text "map_of_set (effect_to_assignments op')"}. \<close> 
         then consider (A1) "(v, a) \<in> set (effect_of op)" 
           | (A2) "(v, a) \<in> (\<Union>(v, a) \<in> set (effect_of op).
             { (v, a') | a'. a' \<in> (\<R>\<^sub>+ \<Psi> v) \<and> a' \<noteq> a })"
@@ -2582,7 +2602,7 @@ transforming the resultant SAS+ state to its corresponding STRIPS state. \<close
 (* TODO refactor. *)
 lemma sas_plus_equivalent_to_strips_i_a_XII:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-    and "\<forall>op' \<in> set ops'. op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)" 
+    and "\<forall>op' \<in> set ops'. op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)" 
   shows "execute_parallel_operator (\<phi>\<^sub>S \<Psi> s) ops' 
     = \<phi>\<^sub>S \<Psi> (execute_parallel_operator_sas_plus s [\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops'])" 
 using assms
@@ -2594,13 +2614,13 @@ proof (induction ops' arbitrary: s)
 next
   case (Cons op' ops')
   let ?\<Pi> = "\<phi> \<Psi>"
-  let ?t' = "(\<phi>\<^sub>S \<Psi> s) ++ map_of (effect_to_assignments op')"
+  let ?t' = "(\<phi>\<^sub>S \<Psi> s) ++ map_of_set (effect_to_assignments op')"
     and ?t = "s ++ map_of (effect_of (\<phi>\<^sub>O\<inverse> \<Psi> op'))"
   have nb\<^sub>1: "?t' = \<phi>\<^sub>S \<Psi> ?t" 
     using sas_plus_equivalent_to_strips_i_a_XI[OF assms(1)] Cons.prems(2)
     by force
   {
-    have "\<forall>op' \<in> set ops'. op' \<in> set (strips_problem.operators_of ?\<Pi>)" 
+    have "\<forall>op' \<in> set ops'. op' \<in>  (strips_problem.operators_of ?\<Pi>)" 
       using Cons.prems(2) 
       by simp
     then have "execute_parallel_operator (\<phi>\<^sub>S \<Psi> ?t) ops' 
@@ -2613,12 +2633,13 @@ next
       by argo
   }
   thus ?case 
+    
     by simp
 qed
 
 lemma sas_plus_equivalent_to_strips_i_a_XIII: 
   assumes "is_valid_problem_sas_plus \<Psi>"
-    and "\<forall>op' \<in> set ops'. op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "\<forall>op' \<in> set ops'. op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "(\<phi>\<^sub>S \<Psi> G) \<subseteq>\<^sub>m execute_parallel_plan 
       (execute_parallel_operator (\<phi>\<^sub>S \<Psi> I) ops') \<pi>"
   shows "(\<phi>\<^sub>S \<Psi> G) \<subseteq>\<^sub>m execute_parallel_plan 
@@ -2659,7 +2680,7 @@ lemma sas_plus_equivalent_to_strips_i_a:
     and "\<forall>v \<in> dom I. the (I v) \<in> \<R>\<^sub>+ \<Psi> v" 
     and "dom G \<subseteq> set ((\<Psi>)\<^sub>\<V>\<^sub>+)" 
     and "\<forall>v \<in> dom G. the (G v) \<in> \<R>\<^sub>+ \<Psi> v" 
-    and "\<forall>ops' \<in> set \<pi>. \<forall>op' \<in> set ops'. op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    and "\<forall>ops' \<in> set \<pi>. \<forall>op' \<in> set ops'. op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "(\<phi>\<^sub>S \<Psi> G) \<subseteq>\<^sub>m execute_parallel_plan (\<phi>\<^sub>S \<Psi> I) \<pi>"
   shows "G \<subseteq>\<^sub>m execute_parallel_plan_sas_plus I (\<phi>\<^sub>P\<inverse> \<Psi> \<pi>)"
 proof -
@@ -2687,7 +2708,7 @@ proof -
       let ?ops = "[\<phi>\<^sub>O\<inverse> \<Psi> op'. op' \<leftarrow> ops']" 
       let ?J = "execute_parallel_operator_sas_plus I ?ops"
         and ?J' = "execute_parallel_operator ?I' ops'" 
-      have nb\<^sub>1: "set ops' \<subseteq> set ((?\<Pi>)\<^sub>\<O>)" 
+      have nb\<^sub>1: "set ops' \<subseteq>  ((?\<Pi>)\<^sub>\<O>)" 
         using Cons.prems(6)
         unfolding STRIPS_Prime_Semantics.is_parallel_solution_for_problem_def list_all_iff ListMem_iff
         by fastforce
@@ -2697,7 +2718,7 @@ proof -
         moreover obtain op' where "op' \<in> set ops'" and "op = \<phi>\<^sub>O\<inverse> \<Psi> op'" 
           using calculation 
           by auto
-        moreover have "op' \<in> set ((?\<Pi>)\<^sub>\<O>)"
+        moreover have "op' \<in>  ((?\<Pi>)\<^sub>\<O>)"
           using nb\<^sub>1 calculation(2)
           by blast
         moreover obtain op'' where "op'' \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = \<phi>\<^sub>O \<Psi> op''" 
@@ -2773,14 +2794,14 @@ proof -
               have "set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<subseteq> dom (range_of \<Psi>)"
                 using is_valid_problem_sas_plus_then(1)[OF assms(1)]
                 by fastforce
-              moreover have "\<forall>v \<in> dom I. the (I v) \<in> set (the (range_of \<Psi> v))"
+              moreover have "\<forall>v \<in> dom I. the (I v) \<in>  (the (range_of \<Psi> v))"
                 using Cons.prems(2, 3) assms(1) set_the_range_of_is_range_of_sas_plus_if 
                 by force
               moreover have "\<forall>op \<in> set ?ops. \<forall>(v, a) \<in> set (effect_of op).
-                v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> a \<in> set (the (?D v))" 
+                v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+) \<and> a \<in>  (the (?D v))" 
                 using set_the_range_of_is_range_of_sas_plus_if assms(1) nb\<^sub>4 
                 by fastforce
-              moreover have v_in_dom_J_range: "\<forall>v \<in> dom ?J. the (?J v) \<in> set (the (?D v))" 
+              moreover have v_in_dom_J_range: "\<forall>v \<in> dom ?J. the (?J v) \<in>  (the (?D v))" 
                 using sas_plus_equivalent_to_strips_i_a_X[of 
                     I "set ((\<Psi>)\<^sub>\<V>\<^sub>+)" ?D ?ops, OF Cons.prems(2)] calculation(1, 2, 3)
                 by fastforce
@@ -2790,7 +2811,7 @@ proof -
                 moreover have "v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
                   using nb\<^sub>2 calculation dom_J_subset_eq_vs 
                   by blast
-                moreover have "set (the (range_of \<Psi> v)) = \<R>\<^sub>+ \<Psi> v" 
+                moreover have " (the (range_of \<Psi> v)) = \<R>\<^sub>+ \<Psi> v" 
                   using set_the_range_of_is_range_of_sas_plus_if[OF assms(1)] 
                     calculation(2)
                   by presburger
@@ -2801,7 +2822,7 @@ proof -
               ultimately have "\<forall>v \<in> dom ?J. the (?J v) \<in> \<R>\<^sub>+ \<Psi> v"
                 by fast
             }
-            moreover have "\<forall>ops' \<in> set \<pi>. \<forall>op'\<in>set ops'. op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+            moreover have "\<forall>ops' \<in> set \<pi>. \<forall>op'\<in>set ops'. op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"
               using Cons.prems(6)
               by simp
             moreover {
@@ -2890,7 +2911,7 @@ proof -
   moreover have "dom ?G \<subseteq> set ?vs"  and "\<forall>v \<in> dom ?G. the (?G v) \<in> \<R>\<^sub>+ \<Psi> v" 
     using is_valid_problem_sas_plus_then(5, 6) assms(1)
     by blast+
-  moreover have "\<forall>ops'\<in>set \<pi>. \<forall>op'\<in>set ops'. op' \<in> set ((?\<Pi>)\<^sub>\<O>)"
+  moreover have "\<forall>ops'\<in>set \<pi>. \<forall>op'\<in>set ops'. op' \<in>  ((?\<Pi>)\<^sub>\<O>)"
     using is_parallel_solution_for_problem_operator_set[OF assms(2)]
     by simp
   moreover {
@@ -2912,7 +2933,7 @@ for a given SAS+ problem correspond to operators of the SAS+ problem. \<close>
 lemma sas_plus_equivalent_to_strips_ii:
   assumes "is_valid_problem_sas_plus \<Psi>" 
     and "STRIPS_Prime_Semantics.is_parallel_solution_for_problem (\<phi> \<Psi>) \<pi>"
-  shows "list_all (list_all (\<lambda>op. ListMem op (operators_of \<Psi>))) (\<phi>\<^sub>P\<inverse> \<Psi> \<pi>)" 
+  shows "list_all (list_all (\<lambda>op. op\<in> (operators_of \<Psi>))) (\<phi>\<^sub>P\<inverse> \<Psi> \<pi>)" 
 proof -
   let ?\<Pi> = "\<phi> \<Psi>" 
   let ?ops = "operators_of \<Psi>" 
@@ -2920,12 +2941,12 @@ proof -
   have "is_valid_problem_strips ?\<Pi>" 
     using is_valid_problem_sas_plus_then_strips_transformation_too[OF assms(1)]
     by simp 
-  have nb\<^sub>1: "\<forall>op' \<in> set ((?\<Pi>)\<^sub>\<O>). (\<exists>op \<in> set ?ops. op' = (\<phi>\<^sub>O \<Psi> op))"  
+  have nb\<^sub>1: "\<forall>op' \<in>  ((?\<Pi>)\<^sub>\<O>). (\<exists>op \<in>  ?ops. op' = (\<phi>\<^sub>O \<Psi> op))"  
     by auto
   {
     fix ops' op' op
     assume "ops' \<in> set \<pi>" and "op' \<in> set ops'" 
-    then have "op' \<in> set (strips_problem.operators_of ?\<Pi>)"
+    then have "op' \<in>  (strips_problem.operators_of ?\<Pi>)"
       using is_parallel_solution_for_problem_operator_set[OF assms(2)]
       by simp
     then obtain op where "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" and "op' = (\<phi>\<^sub>O \<Psi> op)" 
@@ -2968,7 +2989,7 @@ proof -
       show "?G \<subseteq>\<^sub>m execute_parallel_plan_sas_plus ?I ?\<psi>"
         using sas_plus_equivalent_to_strips_i[OF assms].
     next 
-      show "list_all (list_all (\<lambda>op. ListMem op ?ops)) ?\<psi>" 
+      show "list_all (list_all (\<lambda>op.  op\<in> ?ops)) ?\<psi>" 
         using sas_plus_equivalent_to_strips_ii[OF assms].
     qed
 qed
@@ -2994,7 +3015,7 @@ private corollary strips_equivalent_to_sas_plus_i_a_II:
   assumes"is_valid_problem_sas_plus \<Psi>"
     and "\<forall>op \<in> set ops. op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
     and "op' \<in> set [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> ops]"
-  shows "op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+  shows "op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "is_valid_operator_strips (\<phi> \<Psi>) op'"
 proof -
   let ?\<Pi> = "\<phi> \<Psi>" 
@@ -3002,13 +3023,13 @@ proof -
     and ?ops' = "strips_problem.operators_of ?\<Pi>"
   obtain op where op_in: "op \<in> set ops" and op'_is: "op' = \<phi>\<^sub>O \<Psi> op" 
     using strips_equivalent_to_sas_plus_i_a_I[OF assms].
-  then have nb: "op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+  then have nb: "op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"
     using assms(2) op_in op'_is 
     by fastforce
-  thus "op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+  thus "op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"
     and "is_valid_operator_strips ?\<Pi> op'" 
     proof -
-      have "\<forall>op' \<in> set ?ops'. is_valid_operator_strips ?\<Pi> op'"
+      have "\<forall>op' \<in>  ?ops'. is_valid_operator_strips ?\<Pi> op'"
         using is_valid_problem_sas_plus_then_strips_transformation_too_iii[OF assms(1)]
         unfolding list_all_iff. 
       thus "is_valid_operator_strips ?\<Pi> op'" 
@@ -3027,10 +3048,10 @@ proof -
   {
     fix op s
     assume "op \<in> ((\<Psi>)\<^sub>\<O>\<^sub>+)" 
-    moreover have "(\<phi>\<^sub>O \<Psi> op) \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+    moreover have "(\<phi>\<^sub>O \<Psi> op) \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"
       using calculation 
       by simp
-    moreover have "(\<phi>\<^sub>S \<Psi> s) ++ map_of (effect_to_assignments (\<phi>\<^sub>O \<Psi> op))
+    moreover have "(\<phi>\<^sub>S \<Psi> s) ++ map_of_set (effect_to_assignments (\<phi>\<^sub>O \<Psi> op))
       = (\<phi>\<^sub>S \<Psi> (s ++ map_of (effect_of (\<phi>\<^sub>O\<inverse> \<Psi> (\<phi>\<^sub>O \<Psi> op)))))"
       using sas_plus_equivalent_to_strips_i_a_XI[OF assms(1) calculation(2)]
       by blast
@@ -3057,7 +3078,7 @@ proof -
       have "execute_parallel_operator ?s' ?ops' 
         = execute_parallel_operator ?t' [\<phi>\<^sub>O \<Psi> x. x \<leftarrow> ops]"
         unfolding execute_operator_def
-        by simp
+        using Cons.prems(2) assms(1) sas_plus_equivalent_to_strips_i_a_XI sas_plus_equivalent_to_strips_i_a_XII by fastforce
       moreover have "(\<phi>\<^sub>S \<Psi> (execute_parallel_operator_sas_plus s (op # ops)))
         = (\<phi>\<^sub>S \<Psi> (execute_parallel_operator_sas_plus ?t ops))" 
         unfolding execute_operator_sas_plus_def
@@ -3121,7 +3142,7 @@ proof -
     fix op\<^sub>1' op\<^sub>2' I
     assume "op\<^sub>1' \<in> set ?ops'" 
       and "op\<^sub>2' \<in> set ?ops'" 
-      and "\<exists>(v, a) \<in> set (add_effects_of op\<^sub>1'). \<exists>(v', a') \<in> set (delete_effects_of op\<^sub>2').
+      and "\<exists>(v, a) \<in> set (add_effects_of op\<^sub>1'). \<exists>(v', a') \<in>  (delete_effects_of op\<^sub>2').
         (v, a) = (v', a')" 
     moreover obtain op\<^sub>1 op\<^sub>2
       where "op\<^sub>1 \<in> set ops" 
@@ -3136,7 +3157,7 @@ proof -
        by blast+
     moreover obtain v v' a a' 
       where "(v, a) \<in> set (add_effects_of op\<^sub>1')" 
-        and "(v', a') \<in> set (delete_effects_of op\<^sub>2')"
+        and "(v', a') \<in>  (delete_effects_of op\<^sub>2')"
         and "(v, a) = (v', a')" 
       using calculation
       by blast
@@ -3188,7 +3209,7 @@ proof -
         assume "op' \<in> set ?ops'" 
         moreover obtain op where op_in: "op \<in> set ops" 
           and op'_is: "op' = \<phi>\<^sub>O \<Psi> op"
-          and op'_in: "op' \<in> set ((\<phi> \<Psi>)\<^sub>\<O>)"
+          and op'_in: "op' \<in> ((\<phi> \<Psi>)\<^sub>\<O>)"
           and is_valid_op': "is_valid_operator_strips (\<phi> \<Psi>) op'"
           using strips_equivalent_to_sas_plus_i_a_I[OF assms(1, 2)]
             strips_equivalent_to_sas_plus_i_a_II[OF assms(1, 2)] calculation 
@@ -3249,12 +3270,12 @@ proof -
           unfolding STRIPS_Prime_Semantics.are_operator_effects_consistent_def Let_def
           \<comment> \<open> TODO proof is symmetrical... refactor into nb. \<close>
           proof (rule conjI)          
-            show "\<not>list_ex (\<lambda>x. list_ex ((=) x) (delete_effects_of op\<^sub>2')) 
+            show "\<not>list_ex (\<lambda>x. Bex (delete_effects_of op\<^sub>2') ((=) x)) 
               (add_effects_of op\<^sub>1')"
               proof (rule ccontr)
-                assume "\<not>\<not>list_ex (\<lambda>v. list_ex ((=) v) (delete_effects_of op\<^sub>2')) 
+                assume "\<not>\<not>list_ex (\<lambda>v. Bex (delete_effects_of op\<^sub>2') ((=) v)) 
                   (add_effects_of op\<^sub>1')" 
-                then have "\<exists>(v, a) \<in> set (delete_effects_of op\<^sub>2'). 
+                then have "\<exists>(v, a) \<in>  (delete_effects_of op\<^sub>2'). 
                   \<exists>(v', a') \<in> set (add_effects_of op\<^sub>1'). (v, a) = (v', a')" 
                   unfolding list_ex_iff 
                   by fastforce
@@ -3268,11 +3289,10 @@ proof -
                   by blast              
               qed
           next
-            show "\<not>list_ex (\<lambda>v. list_ex ((=) v) (add_effects_of op\<^sub>2')) (delete_effects_of op\<^sub>1')" 
+            show "\<not>Bex  (delete_effects_of op\<^sub>1') (\<lambda>v. list_ex ((=) v) (add_effects_of op\<^sub>2'))" 
               proof (rule ccontr)
-                assume "\<not>\<not>list_ex (\<lambda>v. list_ex ((=) v) (add_effects_of op\<^sub>2')) 
-                  (delete_effects_of op\<^sub>1')" 
-                then have "\<exists>(v, a) \<in> set (delete_effects_of op\<^sub>1'). 
+                assume "\<not>\<not>Bex (delete_effects_of op\<^sub>1') (\<lambda>v. list_ex ((=) v) (add_effects_of op\<^sub>2'))" 
+                then have "\<exists>(v, a) \<in>  (delete_effects_of op\<^sub>1'). 
                   \<exists>(v', a') \<in> set (add_effects_of op\<^sub>2'). (v, a) = (v', a')" 
                   unfolding list_ex_iff
                   by fastforce
@@ -3442,7 +3462,7 @@ proof -
               using is_valid_operator_sas_plus_then(4) calculation v_a_in
               unfolding is_valid_operator_sas_plus_def
               by fastforce
-            ultimately have "(v, a) \<in> set (delete_effects_of op\<^sub>2')" 
+            ultimately have "(v, a) \<in>  (delete_effects_of op\<^sub>2')" 
               using sasp_op_to_strips_set_delete_effects_is[of \<Psi> op\<^sub>2]
                 v'_a'_in v_is a_is 
               using op\<^sub>2'_is 
@@ -3450,7 +3470,7 @@ proof -
           }
           \<comment> \<open> TODO slow. \<close>
           ultimately have "\<exists>op\<^sub>1' \<in> set ?ops'. \<exists>op\<^sub>2' \<in> set ?ops'. 
-            \<exists>(v, a) \<in> set (delete_effects_of op\<^sub>2'). \<exists>(v', a') \<in> set (add_effects_of op\<^sub>1').
+            \<exists>(v, a) \<in>  (delete_effects_of op\<^sub>2'). \<exists>(v', a') \<in> set (add_effects_of op\<^sub>1').
             (v, a) = (v', a')"
             by fastforce
         }
@@ -3506,7 +3526,7 @@ proof -
       {
         fix op v a
         assume "op \<in> set ops" and "(v, a) \<in> set (effect_of op)" 
-        moreover have "op \<in> set ?ops"
+        moreover have "op \<in>  ?ops"
           using Cons.prems(6) calculation(1)
           by simp
         moreover have "is_valid_operator_sas_plus \<Psi> op" 
@@ -3570,16 +3590,16 @@ proof -
               moreover have "v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+)" 
                 using Cons.prems(2) calculation
                 by blast
-              ultimately have "the (I v) \<in> set (the (range_of \<Psi> v))" 
+              ultimately have "the (I v) \<in>  (the (range_of \<Psi> v))" 
                 using Cons.prems(3)
                 using set_the_range_of_is_range_of_sas_plus_if[OF assms(1)]
                 by blast
             }
             moreover have "\<forall>op\<in>set ops. \<forall>(v, a)\<in>set (effect_of op).
-              v \<in> set (sas_plus_problem.variables_of \<Psi>) \<and> a \<in> set (the (range_of \<Psi> v))"
+              v \<in> set (sas_plus_problem.variables_of \<Psi>) \<and> a \<in>  (the (range_of \<Psi> v))"
               using set_the_range_of_is_range_of_sas_plus_if[OF assms(1)] nb\<^sub>1(1) nb\<^sub>1(2)
               by force
-            moreover have nb\<^sub>3: "\<forall>v \<in> dom ?J. the (?J v) \<in> set (the (range_of \<Psi> v))" 
+            moreover have nb\<^sub>3: "\<forall>v \<in> dom ?J. the (?J v) \<in>  (the (range_of \<Psi> v))" 
               using sas_plus_equivalent_to_strips_i_a_X[of I "set ?vs" "range_of \<Psi>" ops] 
                 calculation
               by fast
@@ -3589,7 +3609,7 @@ proof -
               moreover have "v \<in> set ((\<Psi>)\<^sub>\<V>\<^sub>+)"
                 using nb\<^sub>2 calculation
                 by blast
-              moreover have "set (the (range_of \<Psi> v)) = \<R>\<^sub>+ \<Psi> v" 
+              moreover have " (the (range_of \<Psi> v)) = \<R>\<^sub>+ \<Psi> v" 
                 using set_the_range_of_is_range_of_sas_plus_if[OF assms(1)] 
                   calculation(2)
                 by presburger
@@ -3600,7 +3620,7 @@ proof -
             ultimately have "\<forall>v \<in> dom ?J. the (?J v) \<in> \<R>\<^sub>+ \<Psi> v"
               by fast
           }
-          moreover have "\<forall>ops\<in>set \<psi>. \<forall>op\<in>set ops. op \<in> set ?ops" 
+          moreover have "\<forall>ops\<in>set \<psi>. \<forall>op\<in>set ops. op \<in>  ?ops" 
             using Cons.prems(6)
             by auto
           moreover have "G \<subseteq>\<^sub>m execute_parallel_plan_sas_plus ?J \<psi>" 
@@ -3627,7 +3647,7 @@ proof -
               sasp_op_to_strips_def
               SAS_Plus_Prime_STRIPS_Prime.sasp_op_to_strips_def Let_def
             by auto
-          moreover have "set ?ops' \<subseteq> set (strips_problem.operators_of ?\<Pi>)"
+          moreover have "set ?ops' \<subseteq>  (strips_problem.operators_of ?\<Pi>)"
             using strips_equivalent_to_sas_plus_i_a_II(1)[OF assms(1)] Cons.prems(6)
             by auto
           moreover have "\<not>(STRIPS_Prime_Semantics.are_all_operators_applicable ?I' ?ops' 
@@ -3672,7 +3692,7 @@ proof -
   moreover have "\<forall>v \<in> dom ?G. the (?G v) \<in> \<R>\<^sub>+ \<Psi> v"
     using is_valid_problem_sas_plus_then(6) assms(1)
     by auto
-  moreover have "\<forall>ops \<in> set \<psi>. \<forall>op \<in> set ops. op \<in> set ?ops"
+  moreover have "\<forall>ops \<in> set \<psi>. \<forall>op \<in> set ops. op \<in>  ?ops"
     using is_parallel_solution_for_problem_plan_operator_set[OF assms(2)]
     by fastforce
   moreover have "?G \<subseteq>\<^sub>m execute_parallel_plan_sas_plus ?I \<psi>" 
@@ -3693,7 +3713,7 @@ qed
 lemma strips_equivalent_to_sas_plus_ii:
   assumes "is_valid_problem_sas_plus \<Psi>"
     and "is_parallel_solution_for_problem \<Psi> \<psi>"
-  shows "list_all (list_all (\<lambda>op. ListMem op (strips_problem.operators_of (\<phi> \<Psi>)))) (\<phi>\<^sub>P \<Psi> \<psi>)" 
+  shows "list_all (list_all (\<lambda>op.  op\<in> (strips_problem.operators_of (\<phi> \<Psi>)))) (\<phi>\<^sub>P \<Psi> \<psi>)" 
 proof -
   let ?ops = "operators_of \<Psi>"
   let ?\<Pi> = "\<phi> \<Psi>"
@@ -3702,7 +3722,7 @@ proof -
   have "is_valid_problem_strips ?\<Pi>" 
     using is_valid_problem_sas_plus_then_strips_transformation_too[OF assms(1)]
     by simp 
-  have nb\<^sub>1: "\<forall>op \<in> set ?ops. (\<exists>op' \<in> set ?ops'. op' = (\<phi>\<^sub>O \<Psi> op))" 
+  have nb\<^sub>1: "\<forall>op \<in>  ?ops. (\<exists>op' \<in>  ?ops'. op' = (\<phi>\<^sub>O \<Psi> op))" 
     unfolding sas_plus_problem_to_strips_problem_def
       SAS_Plus_Prime_STRIPS_Prime.sas_plus_problem_to_strips_problem_def Let_def 
       sasp_op_to_strips_def
@@ -3714,10 +3734,10 @@ proof -
       using is_parallel_solution_for_problem_plan_operator_set[OF assms(2)] 
         calculation
       by blast
-    moreover obtain op' where "op' \<in> set ?ops'" and "op' = (\<phi>\<^sub>O \<Psi> op)" 
+    moreover obtain op' where "op' \<in>  ?ops'" and "op' = (\<phi>\<^sub>O \<Psi> op)" 
       using nb\<^sub>1 calculation(3)
       by auto
-    ultimately have "(\<phi>\<^sub>O \<Psi> op) \<in> set ?ops'"
+    ultimately have "(\<phi>\<^sub>O \<Psi> op) \<in>  ?ops'"
       by blast
   }
   thus ?thesis 
@@ -3759,7 +3779,7 @@ proof -
         using strips_equivalent_to_sas_plus_i[OF assms]
         by simp
     next 
-      show "list_all (list_all (\<lambda>op. ListMem op ?ops')) ?\<pi>" 
+      show "list_all (list_all (\<lambda>op.  op\<in> ?ops')) ?\<pi>" 
         using strips_equivalent_to_sas_plus_ii[OF assms].
     qed
 qed
@@ -3847,7 +3867,7 @@ which concludes the proof. \<close>
 theorem 
   serial_sas_plus_equivalent_to_serial_strips:
   assumes "is_valid_problem_sas_plus \<Psi>" 
-    and "SAS_Plus_Semantics.is_serial_solution_for_problem \<Psi> \<psi>"
+    and "SAS_Plus_Prime_Semantics.is_serial_solution_for_problem \<Psi> \<psi>"
   shows "STRIPS_Prime_Semantics.is_serial_solution_for_problem (\<phi> \<Psi>) [\<phi>\<^sub>O \<Psi> op. op \<leftarrow> \<psi>]" 
 proof -
   let ?\<psi>' = "embed \<psi>"
@@ -3855,7 +3875,7 @@ proof -
   let ?\<pi>' = "\<phi>\<^sub>P \<Psi> ?\<psi>'"
   let ?\<pi> = "concat ?\<pi>'"
   {
-    have "SAS_Plus_Semantics.is_parallel_solution_for_problem \<Psi> ?\<psi>'"
+    have "SAS_Plus_Prime_Semantics.is_parallel_solution_for_problem \<Psi> ?\<psi>'"
       using execute_serial_plan_sas_plus_is_execute_parallel_plan_sas_plus[OF assms]
       by simp
     hence "STRIPS_Prime_Semantics.is_parallel_solution_for_problem ?\<Pi> ?\<pi>'"
@@ -3945,7 +3965,7 @@ theorem
   serial_strips_equivalent_to_serial_sas_plus:
   assumes "is_valid_problem_sas_plus \<Psi>" 
     and "STRIPS_Prime_Semantics.is_serial_solution_for_problem (\<phi> \<Psi>) \<pi>"
-  shows "SAS_Plus_Semantics.is_serial_solution_for_problem \<Psi> [\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> \<pi>]" 
+  shows "SAS_Plus_Prime_Semantics.is_serial_solution_for_problem \<Psi> [\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> \<pi>]" 
 proof -
   let ?\<pi>' = "embed \<pi>"
     and ?\<Pi> = "\<phi> \<Psi>"
@@ -3955,7 +3975,7 @@ proof -
     have "STRIPS_Prime_Semantics.is_parallel_solution_for_problem ?\<Pi> ?\<pi>'"
       using embedding_lemma[OF 
           is_valid_problem_sas_plus_then_strips_transformation_too[OF assms(1)] assms(2)].
-    hence "SAS_Plus_Semantics.is_parallel_solution_for_problem \<Psi> ?\<psi>'"
+    hence "SAS_Plus_Prime_Semantics.is_parallel_solution_for_problem \<Psi> ?\<psi>'"
       using sas_plus_equivalent_to_strips[OF assms(1)]
       by simp
   }
@@ -3979,7 +3999,7 @@ upper length bound for  SAS problems and induced STRIPS problems.
  We keep this polymorphic by not specifying concrete types so it applies to both STRIPS and 
 SAS+ plans. \<close>
 abbreviation bounded_plan_set 
-  where "bounded_plan_set ops k \<equiv> { \<pi>. set \<pi> \<subseteq> set ops \<and> length \<pi> = k }"
+  where "bounded_plan_set ops k \<equiv> { \<pi>. set \<pi> \<subseteq>  ops \<and> length \<pi> = k }"
 
 definition bounded_solution_set_sas_plus' 
   :: "('variable, 'domain) sas_plus_problem 
@@ -4075,18 +4095,18 @@ lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expressive_i_a
             unfolding bounded_solution_set_sas_plus'_def
             by blast+
           moreover obtain op\<^sub>1 \<psi>\<^sub>1' where "\<psi>\<^sub>1 = op\<^sub>1 # \<psi>\<^sub>1'" 
-            and "set (op\<^sub>1 # \<psi>\<^sub>1') \<subseteq> set ?ops"
+            and "set (op\<^sub>1 # \<psi>\<^sub>1') \<subseteq>  ?ops"
             and "length \<psi>\<^sub>1' = k" 
             using calculation(5) Suc(2)
             unfolding length_Suc_conv
             by blast
           moreover obtain op\<^sub>2 \<psi>\<^sub>2' where "\<psi>\<^sub>2 = op\<^sub>2 # \<psi>\<^sub>2'" 
-            and "set (op\<^sub>2 # \<psi>\<^sub>2') \<subseteq> set ?ops" 
+            and "set (op\<^sub>2 # \<psi>\<^sub>2') \<subseteq>  ?ops" 
             and "length \<psi>\<^sub>2' = k"
             using calculation(6) Suc(3)
             unfolding length_Suc_conv
             by blast
-          moreover have "set \<psi>\<^sub>1' \<subseteq> set ?ops" and "set \<psi>\<^sub>2' \<subseteq> set ?ops" 
+          moreover have "set \<psi>\<^sub>1' \<subseteq>  ?ops" and "set \<psi>\<^sub>2' \<subseteq>  ?ops" 
             using calculation(8, 11) 
             by auto+
           moreover have "\<psi>\<^sub>1' \<in> ?P k" and "\<psi>\<^sub>2' \<in> ?P k"
@@ -4125,7 +4145,7 @@ private corollary sas_plus_formalism_and_induced_strips_formalism_are_equally_ex
     {
       fix \<psi>
       assume "\<psi> \<in> bounded_solution_set_sas_plus' \<Psi> k" 
-      then have "set \<psi> \<subseteq> set ?ops" 
+      then have "set \<psi> \<subseteq>  ?ops" 
         and "length \<psi> = k" 
         unfolding bounded_solution_set_sas_plus'_def is_serial_solution_for_problem_def Let_def 
           list_all_iff ListMem_iff 
@@ -4170,7 +4190,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
            using calculation
            by blast
          moreover obtain \<psi> where "length \<psi> = k" 
-           and "SAS_Plus_Semantics.is_serial_solution_for_problem \<Psi> \<psi>" 
+           and "SAS_Plus_Prime_Semantics.is_serial_solution_for_problem \<Psi> \<psi>" 
            and "\<pi> = ?\<phi>\<^sub>P \<psi>" 
            using calculation(2)
            unfolding bounded_solution_set_sas_plus'_def 
@@ -4202,7 +4222,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
          \<comment> \<open> Construct the counter example \<open>\<psi> \<equiv> [\<phi>\<^sub>O\<inverse> ?\<Pi> op. op \<leftarrow> \<pi>]\<close> and show that \<open>\<psi> \<in> ?Sol\<^sub>k\<close>
             as well as \<open>?\<phi>\<^sub>P \<psi> = \<pi>\<close> hence \<open>\<pi> \<in> ?\<phi>\<^sub>P ` ?Sol\<^sub>k\<close>. \<close>
          moreover have "length [\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> \<pi>] = k"
-           and "SAS_Plus_Semantics.is_serial_solution_for_problem \<Psi> [\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> \<pi>]" 
+           and "SAS_Plus_Prime_Semantics.is_serial_solution_for_problem \<Psi> [\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> \<pi>]" 
            subgoal 
              using calculation(5) 
              by simp
@@ -4217,7 +4237,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
            by blast
          (* TODO refactor transformation lemmas *)
          moreover {
-           have "\<forall>op \<in> set \<pi>. op \<in> set ((?\<Pi>)\<^sub>\<O>)"
+           have "\<forall>op \<in> set \<pi>. op \<in> ((?\<Pi>)\<^sub>\<O>)"
              using calculation(4)
              unfolding STRIPS_Prime_Semantics.is_serial_solution_for_problem_def list_all_iff ListMem_iff
              by simp
@@ -4227,7 +4247,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
                moreover have "?\<phi>\<^sub>P [\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> op # \<pi>] 
                 = (\<phi>\<^sub>O \<Psi> (\<phi>\<^sub>O\<inverse> \<Psi> op)) # ?\<phi>\<^sub>P [\<phi>\<^sub>O\<inverse> \<Psi> op. op \<leftarrow> \<pi>]"
                  by simp
-               moreover have "op \<in>  set ((?\<Pi>)\<^sub>\<O>)" 
+               moreover have "op \<in>  ((?\<Pi>)\<^sub>\<O>)" 
                  using Cons.prems
                  by simp
                moreover have "(\<phi>\<^sub>O \<Psi> (\<phi>\<^sub>O\<inverse> \<Psi> op)) = op"
@@ -4332,7 +4352,7 @@ proof -
     assume "\<psi> \<in> ?Sol\<^sub>k"
     then have "length \<psi> = k" and "set \<psi> \<subseteq> ?Ops"
       unfolding bounded_solution_set_sas_plus'_def 
-        SAS_Plus_Semantics.is_serial_solution_for_problem_def Let_def list_all_iff ListMem_iff
+        SAS_Plus_Prime_Semantics.is_serial_solution_for_problem_def Let_def list_all_iff ListMem_iff
       by fastforce+
     hence "\<psi> \<in> ?P\<^sub>k" 
       by blast
@@ -4351,7 +4371,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
   shows "finite (bounded_solution_set_strips' (\<phi> \<Psi>) k)"
 proof -
   let ?\<Pi> = "\<phi> \<Psi>"
-  let ?Ops = "set ((?\<Pi>)\<^sub>\<O>)"
+  let ?Ops = " ((?\<Pi>)\<^sub>\<O>)"
   let ?Sol\<^sub>k = "bounded_solution_set_strips' ?\<Pi> k"
     and ?P\<^sub>k = "{ \<pi>. set \<pi> \<subseteq> ?Ops \<and> length \<pi> = k }"
   {
@@ -4369,7 +4389,7 @@ proof -
   thus ?thesis
     using bounded_plan_set_finite rev_finite_subset[of ?P\<^sub>k ?Sol\<^sub>k] 
     unfolding state_to_strips_state_def
-      SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def operators_of_def
+      SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def operators_of_def 
     by blast
 qed
 

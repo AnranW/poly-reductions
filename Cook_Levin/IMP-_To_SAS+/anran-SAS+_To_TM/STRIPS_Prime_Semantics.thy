@@ -512,7 +512,7 @@ definition "are_operator_effects_consistent op\<^sub>1 op\<^sub>2 \<equiv> let
     ; add\<^sub>2 = add_effects_of op\<^sub>2
     ; del\<^sub>1 = delete_effects_of op\<^sub>1
     ; del\<^sub>2 = delete_effects_of op\<^sub>2
-  in \<not>list_ex (\<lambda>v. list_ex ((=) v) del\<^sub>2) add\<^sub>1 \<and> \<not>list_ex (\<lambda>v. list_ex ((=) v) add\<^sub>2) del\<^sub>1"
+  in \<not>list_ex (\<lambda>v. Bex  del\<^sub>2 ((=) v) ) add\<^sub>1 \<and> \<not>Bex del\<^sub>1 (\<lambda>v. list_ex ((=) v) add\<^sub>2) "
 
 definition "are_all_operator_effects_consistent ops \<equiv>
   list_all (\<lambda>op. list_all (are_operator_effects_consistent op) ops) ops"
@@ -522,7 +522,7 @@ definition execute_parallel_operator
     \<Rightarrow> 'variable strips_operator list
     \<Rightarrow> 'variable strips_state"
   where "execute_parallel_operator s ops
-    \<equiv> foldl (++) s (map (map_of \<circ> effect_to_assignments) ops)"
+    \<equiv> foldl (++) s (map (map_of_set \<circ> effect_to_assignments) ops)"
 text \<open> The parallel STRIPS execution semantics is defined in similar way as the serial STRIPS
 execution semantics. However, the applicability test is lifted to parallel operators and we
 additionally test for operator consistency (which was unecessary in the serial case). \<close>
@@ -984,8 +984,8 @@ corollary execute_parallel_operator_cons_equals_corollary:
 
 (* TODO duplicate? *)
 lemma effect_to_assignments_simp[simp]: "effect_to_assignments op
-  = set(map (\<lambda>v. (v, True)) (add_effects_of op)) @ (\<lambda>v. (v, False)) ` (delete_effects_of op)"
-  by (simp add: effect_to_assignments_i)
+  =  (set(map (\<lambda>v. (v, True)) (add_effects_of op))) \<union> ((\<lambda>v. (v, False)) ` (delete_effects_of op))"
+  using effect_to_assignments_i by blast
 
 lemma effect_to_assignments_set_is[simp]:
   "set (effect_to_assignments op) = { ((v, a), True) | v a. (v, a) \<in> set (add_effects_of op) }
