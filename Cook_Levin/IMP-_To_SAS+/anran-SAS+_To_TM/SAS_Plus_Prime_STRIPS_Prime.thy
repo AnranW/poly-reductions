@@ -2633,8 +2633,7 @@ next
       by argo
   }
   thus ?case 
-    
-    by simp
+    by (auto simp:execute_parallel_operator_def)
 qed
 
 lemma sas_plus_equivalent_to_strips_i_a_XIII: 
@@ -4291,7 +4290,7 @@ private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expres
 \<comment> \<open> The set of fixed length plans with operators in a given operator set is finite. \<close>
 lemma bounded_plan_set_finite:
   shows "finite { \<pi>. set \<pi> \<subseteq> set ops \<and> length \<pi> = k }"
-  proof (induction k)
+proof (induction k)
     case (Suc k)
     let ?P = "{ \<pi>. set \<pi> \<subseteq> set ops \<and> length \<pi> = k }"
       and ?P' = "{ \<pi>. set \<pi> \<subseteq> set ops \<and> length \<pi> = Suc k }"  
@@ -4338,6 +4337,19 @@ lemma bounded_plan_set_finite:
       by blast
   qed force
 
+(* HERE! *)
+lemma bounded_plan_set_finite_set:
+  shows "finite { \<pi>. set \<pi> \<subseteq> ops \<and> length \<pi> = k }"
+  proof (induction k)
+    case 0
+    then show ?case by auto
+  next
+    case (Suc k)
+    then have "\<exists>p\<in>ops. {\<pi>. set \<pi> \<subseteq> ops \<and> length \<pi> = Suc k } = insert p {\<pi>. set \<pi> \<subseteq> ops \<and> length \<pi> = k}" 
+    then show ?case sorry
+  qed
+
+
 \<comment> \<open> The set of fixed length SAS+ solutions are subsets of the set of plans with fixed length and 
 therefore also finite. \<close>
 private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expressive_ii_a:
@@ -4360,7 +4372,7 @@ proof -
   then have "?Sol\<^sub>k \<subseteq> ?P\<^sub>k" 
     by force
   thus ?thesis
-    using bounded_plan_set_finite rev_finite_subset[of ?P\<^sub>k ?Sol\<^sub>k]
+    using bounded_plan_set_finite_set[of "?Ops" "k"] rev_finite_subset[of ?P\<^sub>k ?Sol\<^sub>k]
     by auto
 qed
 
@@ -4390,7 +4402,7 @@ proof -
     using bounded_plan_set_finite rev_finite_subset[of ?P\<^sub>k ?Sol\<^sub>k] 
     unfolding state_to_strips_state_def
       SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def operators_of_def 
-    by blast
+    using bounded_plan_set_finite_set by blast
 qed
 
 text \<open> With the results on the equivalence of SAS+ and STRIPS solutions, we can now show that given 

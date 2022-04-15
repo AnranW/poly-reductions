@@ -133,7 +133,6 @@ definition elem_from_set :: "'a set \<Rightarrow> 'a" where
 "
   elem_from_set s = (THE x. x\<in>s)
 "
-term The
 (* alternative: elem_from_set s = (THE x. x\<in>s) *)
 (* alternative: elem_from_set s = Finite_Set.fold (\<lambda>x. \<lambda>y. x) (undefined) s*)
 find_theorems name:Finite_Set.fold 
