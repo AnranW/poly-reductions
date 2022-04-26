@@ -33,14 +33,6 @@ definition state_to_strips_state
       map_of_set ( (\<lambda>(v, a). ((v, a), the (s v) = a)) `
         (\<Union> (possible_assignments_for \<Psi>`( set defined))))"
 
-(* lemma strips_state_unique: 
-  assumes "s_strip = state_to_strips_state \<Psi> s" and "s_strip (x,y) = Some True"
-  shows "is_singleton {(x,y) |x y. s_strip (x,y) = Some True}"
-proof -
-  let ?defined = "filter (\<lambda>v. s v \<noteq> None) (variables_of \<Psi>)"
-  have "ListMem x ?defined" using assms state_to_strips_state_def possible_assignments_for_def
-    apply (auto simp: state_to_strips_state_def possible_assignments_for_def map_of_set_def)
-     *)
   
 (* 
   type precondition_of: list of (variable,value) tuples, in sas+

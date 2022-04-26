@@ -559,3 +559,4 @@ proof -
   then show ?thesis using plan_def \<open>t \<le> t'\<close>
     by blast
 qed 
+end

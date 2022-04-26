@@ -123,16 +123,6 @@ definition initialization_operators:: "('v, 'd) sas_plus_problem \<Rightarrow> (
     else (\<lambda> y. \<lparr> precondition_of = [(Stage, Init)],  effect_of = [(Var v, DE y)]\<rparr>) `
       ( (the (range_of P v))))) ((P)\<^sub>\<V>\<^sub>+))) " 
 
-(*   concat (map (\<lambda> v. (if v \<in> dom ((P)\<^sub>I\<^sub>+) then [] 
-    else map (\<lambda> y. \<lparr> precondition_of = [(Stage, Init)],  effect_of = [(Var v, DE y)]\<rparr>) 
-      ( (the (range_of P v))))) ((P)\<^sub>\<V>\<^sub>+)) *)
-
-(* { ops.
-    (map (\<lambda>v. if v \<in> dom ((P)\<^sub>I\<^sub>+) then ops= \<lparr>precondition_of = [], effect_of = []\<rparr> 
-     else ops = ((\<lambda> y. \<lparr> precondition_of = [(Stage, Init)],  effect_of = [(Var v, DE y)]\<rparr>) `
-      ( (the (range_of P v))) )) ((P)\<^sub>\<V>\<^sub>+) ) } 
-  - {\<lparr>precondition_of = [], effect_of = []\<rparr>} " *)
-
 lemma in_initialization_operators_iff: 
   "\<lparr>precondition_of = [(Stage, Init)], effect_of = [(Var x, DE y)]\<rparr> 
     \<in> (initialization_operators P) 
@@ -143,13 +133,6 @@ lemma Stage_after_initialization_operator[simp]:
   "op \<in> (initialization_operators P) \<Longrightarrow> (s ++ map_of (effect_of op)) Stage = s Stage"
   by (auto simp: initialization_operators_def)
 
-(* HERE! Source: https://stackoverflow.com/questions/28633353/converting-a-set-to-a-list-in-isabelle *)
-(* definition set_to_list :: "'a set \<Rightarrow> 'a list"
-  where "set_to_list s = (SOME l. set l = s)"
-lemma  set_set_to_list:
-   "finite s \<Longrightarrow> set (set_to_list s) = s"
-  unfolding set_to_list_def by (metis (mono_tags) finite_list some_eq_ex)
- *)
 definition initial_state:: 
   "('v, 'd) sas_plus_problem \<Rightarrow> ('v variable, 'd domain_element) state" where
 "initial_state P = SAS_Plus_Plus_Prime_State_To_SAS_Plus (Init, (\<lambda> v.
