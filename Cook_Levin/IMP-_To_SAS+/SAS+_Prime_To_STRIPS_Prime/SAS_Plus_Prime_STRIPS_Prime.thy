@@ -2,7 +2,7 @@
   Author: Mohammad Abdulaziz, Fred Kurz
 *)
 theory SAS_Plus_Prime_STRIPS_Prime
-  imports "STRIPS_Prime_Semantics" "../anran-IMP--_To_SAS++_Prime/SAS_Plus_Prime_Semantics" 
+  imports "STRIPS_Prime_Semantics" "../IMP--_To_SAS++_Prime/SAS_Plus_Prime_Semantics" 
     "$AFP/Verified_SAT_Based_AI_Planning/Map_Supplement"
 begin
 
@@ -3998,7 +3998,7 @@ upper length bound for  SAS problems and induced STRIPS problems.
  We keep this polymorphic by not specifying concrete types so it applies to both STRIPS and 
 SAS+ plans. \<close>
 abbreviation bounded_plan_set 
-  where "bounded_plan_set ops k \<equiv> { \<pi>. set \<pi> \<subseteq>  ops \<and> length \<pi> = k }"
+  where "bounded_plan_set ops k \<equiv> { \<pi>. set \<pi> \<subseteq> ops \<and> length \<pi> = k }"
 
 definition bounded_solution_set_sas_plus' 
   :: "('variable, 'domain) sas_plus_problem 
@@ -4337,19 +4337,6 @@ proof (induction k)
       by blast
   qed force
 
-(* HERE! *)
-lemma bounded_plan_set_finite_set:
-  shows "finite { \<pi>. set \<pi> \<subseteq> ops \<and> length \<pi> = k }"
-  proof (induction k)
-    case 0
-    then show ?case by auto
-  next
-    case (Suc k)
-    then have "\<exists>p\<in>ops. {\<pi>. set \<pi> \<subseteq> ops \<and> length \<pi> = Suc k } = insert p {\<pi>. set \<pi> \<subseteq> ops \<and> length \<pi> = k}" 
-    then show ?case sorry
-  qed
-
-
 \<comment> \<open> The set of fixed length SAS+ solutions are subsets of the set of plans with fixed length and 
 therefore also finite. \<close>
 private lemma sas_plus_formalism_and_induced_strips_formalism_are_equally_expressive_ii_a:
@@ -4372,7 +4359,7 @@ proof -
   then have "?Sol\<^sub>k \<subseteq> ?P\<^sub>k" 
     by force
   thus ?thesis
-    using bounded_plan_set_finite_set[of "?Ops" "k"] rev_finite_subset[of ?P\<^sub>k ?Sol\<^sub>k]
+    using bounded_plan_set_finite[of "?Ops" "k"] rev_finite_subset[of ?P\<^sub>k ?Sol\<^sub>k]
     by auto
 qed
 
@@ -4402,7 +4389,7 @@ proof -
     using bounded_plan_set_finite rev_finite_subset[of ?P\<^sub>k ?Sol\<^sub>k] 
     unfolding state_to_strips_state_def
       SAS_Plus_Prime_STRIPS_Prime.state_to_strips_state_def operators_of_def 
-    using bounded_plan_set_finite_set by blast
+    by blast
 qed
 
 text \<open> With the results on the equivalence of SAS+ and STRIPS solutions, we can now show that given 

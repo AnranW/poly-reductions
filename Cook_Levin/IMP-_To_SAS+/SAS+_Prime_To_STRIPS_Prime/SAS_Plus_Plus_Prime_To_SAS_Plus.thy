@@ -1,5 +1,5 @@
 theory SAS_Plus_Plus_Prime_To_SAS_Plus 
-imports "../anran-IMP--_To_SAS++_Prime/SAS_Plus_Plus_Prime"
+imports "../IMP--_To_SAS++_Prime/SAS_Plus_Plus_Prime"
 begin 
 
 datatype 'v variable =  Var 'v | Stage

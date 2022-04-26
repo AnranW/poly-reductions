@@ -1,5 +1,5 @@
 (*
-  Author: Mohammad Abdulaziz, Fred Kurz, Anran Wang
+  Author: Mohammad Abdulaziz, Fred Kurz
 *)
 theory SAS_Plus_Prime_Representation
 imports "$AFP/Verified_SAT_Based_AI_Planning/State_Variable_Representation"
