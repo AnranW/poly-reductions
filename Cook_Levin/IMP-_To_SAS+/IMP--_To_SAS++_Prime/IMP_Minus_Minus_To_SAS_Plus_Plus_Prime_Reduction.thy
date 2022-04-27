@@ -305,6 +305,17 @@ proof(cases v)
   then show ?thesis using VN by (auto simp: Let_def imp_minus_minus_to_sas_plus_def weak_map_of_SomeI) 
 qed (auto simp: imp_minus_minus_to_sas_plus_def Let_def)
 
+(* The version for imp_minus_minus_to_sas_plus_prime *)
+lemma range_defined_prime:
+  assumes "v \<in> set (variables_of (imp_minus_minus_to_sas_plus_prime c ))" 
+  shows "(\<exists>y. range_of (imp_minus_minus_to_sas_plus_prime c ) v = Some y)"
+proof(cases v)
+  case (VN x)
+  then have "(VN x, set domain) \<in> set (map (\<lambda> v. (VN v, set domain)) (enumerate_variables c))" 
+    using assms by (auto simp: Let_def imp_minus_minus_to_sas_plus_prime_def)    
+  then show ?thesis using VN by (auto simp: Let_def imp_minus_minus_to_sas_plus_prime_def weak_map_of_SomeI) 
+qed (auto simp: imp_minus_minus_to_sas_plus_prime_def Let_def)
+
 (* Fitted this. HERE! *)
 lemma range_non_empty: 
   assumes "v \<in> set (variables_of (imp_minus_minus_to_sas_plus c I G))" 
@@ -375,6 +386,38 @@ proof -
     by (fastforce simp: is_valid_operator_sas_plus_def Let_def) 
 qed
 
+(* The version for imp_minus_minus_to_sas_plus_prime *)
+lemma operators_valid_prime: 
+  assumes "cs = enumerate_subprograms c" and "c1 \<in> set cs"
+         and  "op \<in> set (com_to_operators c1)"
+  shows "is_valid_operator_sas_plus (imp_minus_minus_to_sas_plus_prime c ) op" 
+proof -                   
+  let ?\<Psi> = "imp_minus_minus_to_sas_plus_prime c "
+  let ?pre = "precondition_of op" and ?eff = "effect_of op" and ?vs = "variables_of ?\<Psi>" 
+      and ?D = "range_of ?\<Psi>" and ?pc_d = "map (\<lambda> i. PCV i) (enumerate_subprograms c)"
+
+  have *: "list_all (\<lambda>(v, a). ListMem v ?vs) ?pre \<and> list_all (\<lambda>(v, a). ListMem v ?vs) ?eff"
+    using assms by(auto simp: imp_minus_minus_to_sas_plus_prime_def Let_def ListMem_iff list_all_def)
+
+  have "((VN x, a) \<in> set ?pre \<or> (VN x, a) \<in> set ?eff) \<Longrightarrow> ?D (VN x) = Some (set domain) 
+    \<and> a \<in> set domain" for x a
+    using assms com_to_operators_registers_in_d com_to_operators_variables_in_enumerate_variables
+        enumerate_subprograms_enumerate_variables 
+    by (fastforce simp: imp_minus_minus_to_sas_plus_prime_def Let_def)    
+  then have "((v, a) \<in> set ?pre \<or> (v, a) \<in> set ?eff) \<Longrightarrow> (?D v \<noteq> None \<and> a \<in> (the (?D v)))" for v a
+    using com_to_operators_PC_is_subprogram assms enumerate_subprograms_transitive
+    by (cases v) 
+      (auto simp: imp_minus_minus_to_sas_plus_prime_def Let_def ListMem_iff Ball_set_list_all)
+  then have "list_all (\<lambda>(v, a). (?D v \<noteq> None) \<and> a \<in> (the (?D v))) ?pre" 
+    and "list_all (\<lambda>(v, a). (?D v \<noteq> None) \<and>  a \<in> (the (?D v))) ?eff" 
+    using Ball_set_list_all by blast+
+
+  then show ?thesis 
+    using com_to_operators_variables_distinct assms distinct_list_all *
+    by (fastforce simp: is_valid_operator_sas_plus_def Let_def) 
+qed
+
+
 lemma restricted_map_eq_Some_iff[simp]: "((f |` S) x = Some y) \<longleftrightarrow> (f x = Some y \<and> x \<in> S)" 
   by(auto simp: restrict_map_def)
 
@@ -408,5 +451,31 @@ proof -
     ultimately show ?thesis
     by (auto simp: is_valid_problem_sas_plus_plus_def range_defined list_all_def)
 qed
+(* The version for imp_minus_minus_to_sas_plus_prime *)
+lemma imp_minus_minus_to_sas_plus_valid_prime:
+  "is_valid_problem_sas_plus_plus (imp_minus_minus_to_sas_plus_prime c)"
+proof -
+  let ?\<Psi> = "imp_minus_minus_to_sas_plus_prime c"
+  let ?ops = "operators_of ?\<Psi>"
+      and ?vs = "variables_of ?\<Psi>"
+      and ?I = "initial_of ?\<Psi>"
+      and ?G = "goal_of ?\<Psi>"
+      and ?D = "range_of ?\<Psi>"
+  have "\<forall>x \<in> ?ops. is_valid_operator_sas_plus ?\<Psi> x" 
+    and "\<forall>v \<in> set ?vs. (the (?D v)) \<noteq> {}"
+    using operators_valid_prime c_in_all_subprograms_c[where ?c = c] 
+    by (auto simp: imp_minus_minus_to_sas_plus_prime_def Let_def coms_to_operators_def)
+  moreover have  "?I v \<noteq> None \<longrightarrow> ListMem v ?vs"
+    and "?G v \<noteq> None \<longrightarrow> ListMem v ?vs"
+    and "?I v \<noteq> None \<longrightarrow> (the (?I v)) \<in> (the (?D v))"
+    and "?G v \<noteq> None \<longrightarrow> (the (?G v)) \<in> (the (?D v))" for v
+       apply(cases v)
+       using c_in_all_subprograms_c[where ?c = c] SKIP_in_enumerate_subprograms
+       by (auto simp: imp_minus_minus_to_sas_plus_prime_def Let_def coms_to_operators_def 
+        imp_minus_state_to_sas_plus_def map_comp_def ListMem_iff image_def 
+        split: variable.splits option.splits)
+    ultimately show ?thesis
+    by (auto simp: is_valid_problem_sas_plus_plus_def range_defined_prime list_all_def)
+qed                                                          
 
 end

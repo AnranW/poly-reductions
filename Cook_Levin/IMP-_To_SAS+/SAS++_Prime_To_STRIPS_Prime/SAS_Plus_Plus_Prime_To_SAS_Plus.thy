@@ -123,6 +123,14 @@ definition initialization_operators:: "('v, 'd) sas_plus_problem \<Rightarrow> (
     else (\<lambda> y. \<lparr> precondition_of = [(Stage, Init)],  effect_of = [(Var v, DE y)]\<rparr>) `
       ( (the (range_of P v))))) ((P)\<^sub>\<V>\<^sub>+))) " 
 
+(* The version that accepts given initial and final states. *)
+definition initialization_operators_prime:: "('v, 'd) state \<Rightarrow> ('v, 'd) sas_plus_problem \<Rightarrow> ('v, 'd) operator set" where
+"initialization_operators_prime I P = 
+   \<Union> (set (map (\<lambda> v. (if v \<in> dom I then {} 
+    else (\<lambda> y. \<lparr> precondition_of = [(Stage, Init)],  effect_of = [(Var v, DE y)]\<rparr>) `
+      ( (the (range_of P v))))) ((P)\<^sub>\<V>\<^sub>+))) " 
+
+
 lemma in_initialization_operators_iff: 
   "\<lparr>precondition_of = [(Stage, Init)], effect_of = [(Var x, DE y)]\<rparr> 
     \<in> (initialization_operators P) 
@@ -153,6 +161,18 @@ definition SAS_Plus_Plus_Prime_To_SAS_Plus:: "('v, 'd) sas_plus_problem \<Righta
       goal_of = SAS_Plus_Plus_Prime_State_To_SAS_Plus (NonInit, ((P)\<^sub>G\<^sub>+)),
       range_of = ((\<lambda>x. Some ({de. (\<exists>e\<in>x. de=(DE e))})) \<circ>\<^sub>m (range_of P) 
         \<circ>\<^sub>m (\<lambda>x. (case x of Var x \<Rightarrow> Some x | Stage \<Rightarrow> None)))(Stage \<mapsto> {Init, NonInit})\<rparr>"
+
+(* The version that accepts given initial and final states. *)
+definition SAS_Plus_Plus_Prime_To_SAS_Plus_prime:: "('variable, 'domain) state \<Rightarrow> ('variable, 'domain) state \<Rightarrow> ('v, 'd) sas_plus_problem \<Rightarrow> ('v, 'd) problem" where
+"SAS_Plus_Plus_Prime_To_SAS_Plus_prime I G P = \<lparr> variables_of = Stage # (map Var ((P)\<^sub>\<V>\<^sub>+)),
+      operators_of = {\<lparr> precondition_of = [(Stage, Init)], effect_of = [(Stage, NonInit)]\<rparr>} 
+        \<union> (initialization_operators P) 
+        \<union> (SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator `((P)\<^sub>\<O>\<^sub>+)), 
+      initial_of = initial_state P ,
+      goal_of = SAS_Plus_Plus_Prime_State_To_SAS_Plus (NonInit, ((P)\<^sub>G\<^sub>+)),
+      range_of = ((\<lambda>x. Some ({de. (\<exists>e\<in>x. de=(DE e))})) \<circ>\<^sub>m (range_of P) 
+        \<circ>\<^sub>m (\<lambda>x. (case x of Var x \<Rightarrow> Some x | Stage \<Rightarrow> None)))(Stage \<mapsto> {Init, NonInit})\<rparr>"
+
 
 lemma SAS_Plus_Plus_Prime_To_SAS_Plus_valid: 
   assumes "is_valid_problem_sas_plus_plus P"
@@ -287,6 +307,50 @@ proof -
         list_all_def split: option.splits)
   thus ?thesis by blast
 qed
+
+(* This is the version that uses  is_serial_solution_for_problem_sas_plus_plus_prime *)
+lemma SAS_Plus_Plus_Prime_To_SAS_Plus_ii:
+  assumes "is_valid_problem_sas_plus_plus P" 
+    "is_serial_solution_for_problem_sas_plus_plus_prime I' G' P plan"
+  shows "\<exists>prefix. length prefix \<le> length ((P)\<^sub>\<V>\<^sub>+) + 1 
+    \<and> is_serial_solution_for_problem (SAS_Plus_Plus_Prime_To_SAS_Plus P) 
+        (prefix @ (map SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator plan))" 
+proof -
+  obtain I where I_def: "I' \<subseteq>\<^sub>m I \<and> dom I = set ((P)\<^sub>\<V>\<^sub>+)
+        \<and> (\<forall> v \<in> set ((P)\<^sub>\<V>\<^sub>+). the (I v) \<in> range_of' P v)
+        \<and> G' \<subseteq>\<^sub>m execute_serial_plan_sas_plus I plan
+        \<and> list_all (\<lambda>op. op \<in> ((P)\<^sub>\<O>\<^sub>+)) plan" using assms is_serial_solution_for_problem_sas_plus_plus_prime_def
+    by metis
+  let ?P' = "SAS_Plus_Plus_Prime_To_SAS_Plus P"
+  let ?missing_vs = "(concat (map (\<lambda>v. case I' v of Some _ \<Rightarrow> [] |
+    None \<Rightarrow> [(v, the (I v))]) (remdups ((P)\<^sub>\<V>\<^sub>+))))"
+  let ?prefix' = "initialization_sequence ?missing_vs"
+  let ?prefix = "?prefix' @ [\<lparr> precondition_of = [(Stage, Init)], effect_of = [(Stage, NonInit)]\<rparr>]"
+  have "execute_serial_plan_sas_plus ((?P')\<^sub>I\<^sub>+) ?prefix' 
+    = SAS_Plus_Plus_Prime_State_To_SAS_Plus (Init, I)" using I_def
+    apply(auto simp: SAS_Plus_Plus_Prime_To_SAS_Plus_def SAS_Plus_Plus_Prime_State_To_SAS_Plus_def map_le_def
+        initial_state_def map_add_def map_comp_def fun_eq_iff split: option.splits variable.splits) 
+     
+    by (metis domI option.inject)
+  hence "execute_serial_plan_sas_plus ((?P')\<^sub>I\<^sub>+) 
+    (?prefix @ (map SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator plan)) 
+    = SAS_Plus_Plus_Prime_State_To_SAS_Plus (NonInit, execute_serial_plan_sas_plus I plan)" by auto
+  hence "((?P')\<^sub>G\<^sub>+) \<subseteq>\<^sub>m execute_serial_plan_sas_plus ((?P')\<^sub>I\<^sub>+) 
+    (?prefix @ (map SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator plan))" using I_def 
+    apply(auto simp:  SAS_Plus_Plus_Prime_To_SAS_Plus_def SAS_Plus_Plus_Prime_State_To_SAS_Plus_def 
+        map_add_def map_comp_def split: option.splits variable.splits)
+    apply(simp add: map_le_def fun_eq_iff)
+    by (metis (no_types, lifting) domIff option.case_eq_if)
+  hence "length ?prefix \<le> length ((P)\<^sub>\<V>\<^sub>+) + 1 
+    \<and> is_serial_solution_for_problem (SAS_Plus_Plus_Prime_To_SAS_Plus P) 
+        (?prefix @ (map SAS_Plus_Plus_Prime_Operator_To_SAS_Plus_Operator plan))"
+    using I_def
+    by(auto simp: is_serial_solution_for_problem_def Let_def in_initialization_operators_iff
+        initialization_sequence_def ListMem_iff SAS_Plus_Plus_Prime_To_SAS_Plus_def range_of'_def 
+        list_all_def split: option.splits)
+  thus ?thesis by blast
+qed
+
 
 lemma map_of_map_Stage[simp]: 
   "map_of (map (\<lambda>x. (Var (fst x), DE (snd x))) l) Stage = None"
