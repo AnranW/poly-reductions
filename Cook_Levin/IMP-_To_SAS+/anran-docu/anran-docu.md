@@ -1,5 +1,5 @@
 # Short Overview of the IMP- Completeness Project #
-## Anran Wang ##
+**Anran Wang**
 ## Introduction ##
 This is a short explanation of the "IMP- to Turing Machine" project. It is meant for people who continue with the project and wish to quickly have an overview.
 It first gives a shallow introduction of the project, then goes into the part that I modified and explain why the modification was sensible and necessary. 
