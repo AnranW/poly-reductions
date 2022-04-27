@@ -2,17 +2,16 @@
 **Anran Wang**
   
 **Table of Contents**
-- [Short Overview of the IMP- Completeness Project](#short-overview-of-the-imp--completeness-project)
-  - [Introduction](#introduction)
-  - [IMP- to SAS+](#imp--to-sas)
-    - [IMP- to IMP--](#imp--to-imp--)
-    - [IMP-- to SAS+](#imp---to-sas)
-  - [IMP-- to SAS++', SAS+', then STRIPS'](#imp---to-sas-sas-then-strips)
-    - [IMP-- to SAS++'](#imp---to-sas-1)
-    - [SAS++' to SAS+'](#sas-to-sas)
-    - [SAS+' to STRIPS'](#sas-to-strips)
-    - [IMP-- to STRIPS'](#imp---to-strips)
-  - [Conclusion](#conclusion)
+- [Introduction](#introduction)
+- [IMP- to SAS+](#imp--to-sas)
+  - [IMP- to IMP--](#imp--to-imp--)
+  - [IMP-- to SAS+](#imp---to-sas)
+- [IMP-- to SAS++', SAS+', then STRIPS'](#imp---to-sas-sas-then-strips)
+  - [IMP-- to SAS++'](#imp---to-sas-1)
+  - [SAS++' to SAS+'](#sas-to-sas)
+  - [SAS+' to STRIPS'](#sas-to-strips)
+  - [IMP-- to STRIPS'](#imp---to-strips)
+- [Conclusion](#conclusion)
 
 ## Introduction ##
 This is a short explanation of the "IMP- to Turing Machine" project. It is meant for people who continue with the project and wish to quickly have an overview.
