@@ -19,12 +19,9 @@ record  ('variable, 'domain) sas_plus_operator =
 
 record  ('variable, 'domain) sas_plus_problem =
   variables_of :: "'variable list" ("(_\<^sub>\<V>\<^sub>+)" [1000] 999)
-  (* HERE: Change to set! *)
-  (* operators_of :: "('variable, 'domain) sas_plus_operator list" ("(_\<^sub>\<O>\<^sub>+)" [1000] 999) *)
   operators_of :: "('variable, 'domain) sas_plus_operator set" ("(_\<^sub>\<O>\<^sub>+)" [1000] 999) 
   initial_of :: "('variable, 'domain) state" ("(_\<^sub>I\<^sub>+)" [1000] 999)
   goal_of :: "('variable, 'domain) state" ("(_\<^sub>G\<^sub>+)" [1000] 999)
-  (* range_of :: "'variable \<rightharpoonup> 'domain list" *)
   range_of :: "'variable \<rightharpoonup> 'domain set"
 
 (* Fitted this. HERE! *)
