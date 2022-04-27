@@ -20,9 +20,7 @@ STRIPS operators with fields corresponding to precondition, add effects as well 
 record  ('variable) strips_operator = 
   precondition_of :: "'variable list" 
   add_effects_of :: "'variable list" 
-  (* delete_effects_of :: "'variable list"  *)
   delete_effects_of :: "'variable set"
-  (* HERE!  *)
 
 \<comment> \<open> This constructor function is sometimes a more descriptive and replacement for the record 
 syntax and can moreover be helpful if the record syntax leads to type ambiguity.\<close>

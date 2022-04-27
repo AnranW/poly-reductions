@@ -6,6 +6,7 @@ It first gives a shallow introduction of the project in its pre-existing state, 
 Due to the liminations of the author, the document might have misconceptions, so take it with a grain of salt. 
 
 ## IMP- to SAS+ ##
+### IMP- to IMP-- ###
 To encode IMP- to a Turing Machine(TM), we start by encoding it to IMP-- and prove its correctness and soundness. IMP- is a "shrunk" version of IMP that does not have boolean expressions, as can be seen in their respective *com* definitions:
 
 ![IMP](./images/imp.png)
@@ -17,7 +18,8 @@ IMP- is furthur shrunk to IMP-- by removing arithmetic expressions and restricti
 
 The reduction and the proof is in folder IMP-_To_IMP--/ .
 
-Next step is to reduce IMP-- to TM, by reducing IMP-- to SAS+ then to TM, with intermediate steps, of course.
+### IMP-- to SAS+ ###
+Next step is to reduce IMP-- to SAS+, with intermediate steps, of course.
 
 SAS+ is a formalism often used in AI planning. Roughly speaking, an SAS+ *problem* is defined in Isabelle as a *record* with variables, operators, initial state, goal state, and variable ranges.
 An operator, if its *preconditions* are fulfilled in the current state, takes the system to the next state via its *effects*.
@@ -34,8 +36,8 @@ In the counterpart definition in SAS_Plus_Representation.thy, we have something 
 
 IMP-- is first reduced to SAS++, then SAS++ is reduced to SAS+, see the corresponding folders in this project. SAS+ is reduced(equivalent) to STRIPS, as shown in the afp project *Verified_SAT_Based_AI_Planning*. STRIPS in turn is to be reduced to/proven equivalent to TM.
 
-## IMP-- to SAS++', SAS+', and STRIPS' ##
-
+## IMP-- to SAS++', SAS+', then STRIPS' ##
+### IMP-- to SAS++' ###
 In the reduction from IMP-- to SAS++, an IMP-- program is translated to a SAS++ problem, as shown in the definition of *imp_minus_minus_to_sas_plus* in IMP--_To_SAS++/: 
 
 ![imp--sas++](./images/imp--sas%2B%2B.jpg)
@@ -47,13 +49,22 @@ In the definition of *sas_plus_problem* in $AFP/Verified_SAT_Based_AI_Planning/,
 
 ![sas+problem](./images/sas%2Bproblem.jpg)
 
-Since we would like to allow unknown initial states (mapping from variable to value) in the IMP-- program, it would make sense to drop the finiteness of the range of the variables. As a result, we would also have to allow potentially infinite number of allowed operators, since an operator is defined with (variable,value) tupels, and if we have infinite possible values for a variable, we would allow possibly infinite operators, as shown in IMP--To_SAS++_Prime/SAS_Plus_Prime_Representation.thy :
+Since we would like to allow unknown initial states (mapping from variable to value) in the IMP-- program, it would make sense to drop the finiteness of the range of the variables. As a result, we would also have to allow potentially infinite number of allowed operators, since an operator is defined with (variable,value) couples, and if we have infinite possible values for a variable, we would allow possibly infinite operators, as shown in IMP--To_SAS++_Prime/SAS_Plus_Prime_Representation.thy :
 
 ![sas++problem](./images/sas%2Bprime_problem.jpg) 
 
 The reduction is the same as that of the finite version, with adjustments from list to set at various positions. In the final lemma, we indeed do not need to pass the initial and final states to be translated alongside the IMP-- program, so the translation itself only captures the structure of the program, see the last two lemmas in IMP--_To_SAS++_Prime/IMP_Minus_Minus_To_SAS_Plus_Plus_Prime_Correctness.thy.
 
+### SAS++' to SAS+' ###
 The next step is to reduce this version to the corresponding SAS+' version, where the initial states are fully initialised. This is done by adding an initialisation state in the beginning, and "guessing" valid values starting from a (not fully initialised) SAS++' state so that it is a valid SAS+' state. The other steps are essentially the same as the reduction from SAS++ to SAS+ with adjusting types from list to set. 
+
+### SAS+' to STRIPS' ###
+Then it is reduced to a corresponding version of STRIPS' where we also drop some finiteness. 
+A STRIPS variable corresponds to a (variable, assignment) tuple from sas+, and a variable can have infinite possible assignments. Consequently, we should allow possibly infinite operators, as shown in SAS++_Prime_To_STRIPS_Prime/STRIPS_Prime_Representation.thy : 
+
+![strips-problem](./images/strips-problem.jpg)
+
+Also, since we might have infinite assignments, we have to set the type for *delete_effects_of* to set, so that when *add_effects_of* sets one (variable, assignment) couple to True, all other (possibly infinite) couples with the same variable are set to False. 
 
 An interesting step in the process is to define the map_of function for sets in SAS++_Prime_To_STRIPS_Prime/STRIPS_Prime_Representation.thy : 
 
@@ -65,6 +76,7 @@ It uses a simple definition of *elem_from_set* (more on THE operator see Theory 
 
 As a result, map_of_set has similar properties like map_of that we used in the reduction, as well as other properties that worked well with the proof, for example *map_of_set_unique* in SAS++_Prime_To_STRIPS_Prime/SAS_Plus_Prime_STRIPS_Prime.thy . 
 
+### IMP-- to STRIPS' ###
 As a summary, a theorem is stated in IMP--_To_STRIPS_Prime/IMP_Minus_Minus_To_STRIPS_Prime.thy that if an IMP-- program *c* terminates in *t* steps, it can be reduced to a STRIPS' problem and it can be solved by a plan whose length is restricted by a value related to *t* and the number of variables in *c*. 
 
 ## Conclusion ##
