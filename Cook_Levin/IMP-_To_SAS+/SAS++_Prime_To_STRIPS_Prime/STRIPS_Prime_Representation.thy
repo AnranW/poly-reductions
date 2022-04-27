@@ -37,7 +37,7 @@ definition  to_precondition
 
 (* Problem: Effect2 is defined as a list, but we might have infinite variables/assignments for a strips operator in the current interpretation *)
 (* Define own Effect2 *)
-(* Compare with AFP/State_Variable_Representation.Effect ; here adapted. *)
+(* Compare with AFP/State_Variable_Representation.Effect *)
 type_synonym ('variable, 'domain) Effect2 = "('variable \<times> 'domain) set"
 
 definition  to_effect
