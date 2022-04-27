@@ -1,5 +1,5 @@
 (*
-  Author: Mohammad Abdulaziz, Fred Kurz, Florian Keßler, Anran Wang
+  Author: Mohammad Abdulaziz, Fred Kurz, Florian Keßler
 *)
 theory SAS_Plus_Plus_Prime
   imports SAS_Plus_Prime_Representation SAS_Plus_Prime_Semantics
