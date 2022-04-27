@@ -1,6 +1,6 @@
 # Short Overview of the IMP- Completeness Project #
 **Anran Wang**
-- [Short Overview of the IMP- Completeness Project](#short-overview-of-the-imp--completeness-project)
+- Table of Contents
   - [Introduction](#introduction)
   - [IMP- to SAS+](#imp--to-sas)
     - [IMP- to IMP--](#imp--to-imp--)
